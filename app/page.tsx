@@ -1,231 +1,85 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
+import { LoginForm } from "../components/auth/LoginForm";
+import { SignupForm } from "../components/auth/SignupForm";
 
-import { NAV_ITEMS } from "./lib/constants/nav";
-import { cn } from "./lib/utils";
+export default function AuthPage() {
+  const [isLogin, setIsLogin] = useState(true);
 
-import DashboardSection from "./dashboard/page";
-import MarketSection from "./stocks/page";
-import ProfileSection from "./profile/page";
-import PortfolioSection from "./portfolio/page";
-
-import { useTheme } from "./context/ThemeContext";
-import { Sun, Moon } from "lucide-react";
-
-type Tab = "dashboard" | "stocks" | "portfolio" | "profile";
-
-/* -----------------------------------------------------
-   NAVBAR (MOBILE)
------------------------------------------------------ */
-
-interface NavbarProps {
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
-  onMenuToggle: () => void;
-}
-
-const Navbar: React.FC<NavbarProps> = ({
-  activeTab,
-  onTabChange,
-  onMenuToggle,
-}) => {
-  const { theme, toggleTheme } = useTheme();
+  const toggleAuthMode = () => {
+    setIsLogin(!isLogin);
+  };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--bg-secondary)] backdrop-blur lg:hidden">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#0f172a] flex items-center justify-center p-4">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/20 blur-[100px] animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/20 blur-[100px] animate-pulse delay-1000" />
+        <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] rounded-full bg-purple-600/10 blur-[80px]" />
+      </div>
 
-        {/* LOGO + BRAND */}
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent)] text-white font-bold">
-            AT
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+
+      <div className="relative z-10 w-full max-w-4xl flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-20">
+        
+        {/* Left Side: Brand & Hero */}
+        <div className="flex-1 text-center md:text-left space-y-6 animate-in slide-in-from-left-4 duration-1000">
+          <div className="flex items-center justify-center md:justify-start gap-4 mb-8">
+             <div className="relative w-20 h-20 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/20">
+               <Image 
+                 src="/main_icon.png" 
+                 alt="AcuTrader Logo" 
+                 width={50} 
+                 height={50} 
+                 className="object-contain" // Fallback if image ratio varies
+                 priority
+               />
+             </div>
+             <div>
+               <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight">
+                 AcuTrader
+               </h1>
+               <p className="text-blue-200 mt-1 font-medium tracking-wide text-sm uppercase opacity-80">
+                 Market Intelligence Platform
+               </p>
+             </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-[var(--text)]">
-              AcuTrader
-            </p>
-            <p className="text-xs text-[var(--text-secondary)]">
-              Your Virtual Trading Floor
-            </p>
+          
+          <div className="space-y-4 max-w-md mx-auto md:mx-0">
+             <h2 className="text-2xl md:text-3xl font-semibold text-white leading-tight">
+               Master the Markets with Precision
+             </h2>
+             <p className="text-gray-400 text-lg leading-relaxed">
+               Experience the next generation of trading tools. Real-time data, advanced analytics, and professional grade execution in one unified dashboard.
+             </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 text-sm text-gray-500 pt-4">
+             <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span>Real-time Data</span>
+             </div>
+             <div className="hidden sm:block w-1 h-1 rounded-full bg-gray-600" />
+             <div>Bank-grade Security</div>
+             <div className="hidden sm:block w-1 h-1 rounded-full bg-gray-600" />
+             <div>24/7 Support</div>
           </div>
         </div>
 
-        {/* Right side buttons: theme toggle + menu */}
-        <div className="flex items-center gap-2">
-          {/* THEME TOGGLE BUTTON */}
-          <button
-            onClick={toggleTheme}
-            className="rounded-xl p-2 border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--accent)]/20 transition"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5 text-yellow-300" />
-            ) : (
-              <Moon className="h-5 w-5 text-[var(--text)]" />
-            )}
-          </button>
-
-          {/* MOBILE MENU */}
-          <button
-            onClick={onMenuToggle}
-            className="inline-flex items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card)] p-2 text-[var(--text)] hover:bg-[var(--accent)]/20"
-            aria-label="Open navigation menu"
-          >
-            <svg
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              fill="none"
-            >
-              <path d="M4 6h16M4 12h16M4 18h16" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </button>
+        {/* Right Side: Auth Forms */}
+        <div className="w-full max-w-md">
+           {isLogin ? (
+             <LoginForm onToggle={toggleAuthMode} />
+           ) : (
+             <SignupForm onToggle={toggleAuthMode} />
+           )}
         </div>
+
       </div>
-    </header>
-  );
-};
-
-/* -----------------------------------------------------
-   MOBILE MENU DRAWER
------------------------------------------------------ */
-
-interface MobileMenuProps {
-  isOpen: boolean;
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
-  onClose: () => void;
-}
-
-const MobileMenu: React.FC<MobileMenuProps> = ({
-  isOpen,
-  activeTab,
-  onTabChange,
-  onClose,
-}) => {
-  if (!isOpen) return null;
-
-  const itemBase =
-    "w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors";
-  const itemActive = "bg-[var(--accent)] text-white";
-  const itemInactive = "text-[var(--text)] hover:bg-[var(--accent)]/20";
-
-  return (
-    <div className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden">
-      <div className="absolute inset-y-0 left-0 w-64 max-w-[80vw] bg-[var(--bg-secondary)] shadow-2xl">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-          <p className="text-sm font-semibold text-[var(--text)]">Navigation</p>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-[var(--text)] hover:bg-[var(--accent)]/20"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Items */}
-        <div className="space-y-2 px-3 py-2">
-          {NAV_ITEMS.map((item) => {
-            const tabName = item.href.substring(1) as Tab;
-            return (
-              <button
-                key={item.href}
-                className={cn(itemBase, activeTab === tabName ? itemActive : itemInactive)}
-                onClick={() => {
-                  onTabChange(tabName);
-                  onClose();
-                }}
-              >
-                {item.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* -----------------------------------------------------
-   FOOTER
------------------------------------------------------ */
-
-const Footer: React.FC = () => {
-  return (
-    <footer className="border-t border-[var(--border)] bg-[var(--bg-secondary)] lg:hidden fixed bottom-0 left-0 right-0 z-40">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2 text-[0.75rem] text-[var(--text-secondary)]">
-        AcuTrader MVP
-      </div>
-    </footer>
-  );
-};
-
-/* -----------------------------------------------------
-   MAIN PAGE
------------------------------------------------------ */
-
-export default function Home() {
-  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const header = {
-    dashboard: {
-      title: "Portfolio Dashboard",
-      description: "Monitor your performance, balance, and asset allocation.",
-    },
-    stocks: {
-      title: "Stock Market",
-      description: "Browse stocks and execute simulated Buy/Sell orders.",
-    },
-    portfolio: {
-      title: "My Holdings",
-      description: "Review investments, average cost, and P/L.",
-    },
-    profile: {
-      title: "User Profile",
-      description: "Manage settings and preferences.",
-    },
-  }[activeTab];
-
-  return (
-    <div className="flex min-h-screen flex-col bg-[var(--bg)] text-[var(--text)] pb-16 lg:pb-0">
-
-      {/* NAV + MENU */}
-      <Navbar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onMenuToggle={() => setIsMenuOpen(true)}
-      />
-
-      <MobileMenu
-        isOpen={isMenuOpen}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onClose={() => setIsMenuOpen(false)}
-      />
-
-      {/* MAIN CONTENT */}
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-10 pt-6 lg:px-6 lg:pt-8 lg:mt-0 mt-16">
-        <div className="mb-5">
-          <h1 className="text-xl font-semibold sm:text-2xl text-[var(--text)]">
-            {header.title}
-          </h1>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">
-            {header.description}
-          </p>
-        </div>
-
-        {/* Dynamic Sections */}
-        {activeTab === "dashboard" && <DashboardSection />}
-        {activeTab === "stocks" && <MarketSection />}
-        {activeTab === "portfolio" && <PortfolioSection />}
-        {activeTab === "profile" && <ProfileSection />}
-      </main>
-
-      {/* FOOTER */}
-      <Footer />
     </div>
   );
 }

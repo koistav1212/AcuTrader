@@ -1,139 +1,231 @@
 "use client";
 
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts";
+import React, { useState } from "react";
 
-import {
-  Briefcase,
-  DollarSign,
-  LineChart as ChartIcon,
-} from "lucide-react";
+import { NAV_ITEMS } from "../lib/constants/nav";
+import { cn } from "../lib/utils";
 
-import { KPICard } from "../components/shared/KpiCard";
-import {
-  portfolioValueData,
-  sectorData,
-  CHART_COLORS,
-  STARTING_BALANCE,
-} from "../lib/data/sim-data";
+import DashboardSection from "./DashboardContent";
+import MarketSection from "../stocks/page";
+import ProfileSection from "../profile/page";
+import PortfolioSection from "../portfolio/page";
 
-export default function DashboardSection() {
-  const totalValue =
-    portfolioValueData[portfolioValueData.length - 1].value;
-  const initialBalance = STARTING_BALANCE;
-  const dailyChangeAbsolute = 165.2;
-  const dailyChangePercent = 1.58;
-  const dailyChangeSign = dailyChangePercent >= 0 ? "+" : "-";
+import { useTheme } from "../context/ThemeContext";
+import { Sun, Moon } from "lucide-react";
+
+type Tab = "dashboard" | "stocks" | "portfolio" | "profile";
+
+/* -----------------------------------------------------
+   NAVBAR (MOBILE)
+----------------------------------------------------- */
+
+interface NavbarProps {
+  activeTab: Tab;
+  onTabChange: (tab: Tab) => void;
+  onMenuToggle: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({
+  activeTab,
+  onTabChange,
+  onMenuToggle,
+}) => {
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <section className="space-y-6">
+    <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--bg-secondary)] backdrop-blur lg:hidden">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
 
-      {/* KPI CARDS */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <KPICard
-          title="Total Portfolio Value"
-          subtitle="All assets combined"
-          value={`$${totalValue.toFixed(2)}`}
-          icon={Briefcase}
-          accent="from-[var(--accent)] to-[var(--accent-hover)]"
-          change="+4.80% lifetime"
-        />
-
-        <KPICard
-          title="Available Cash"
-          subtitle="Ready for trading"
-          value={`$${(initialBalance - 3380).toFixed(2)}`}
-          icon={DollarSign}
-          accent="from-[var(--accent)] to-[var(--accent-hover)]"
-        />
-
-        <KPICard
-          title="Daily P&L"
-          subtitle="Today's performance"
-          value={`${dailyChangeSign}$${dailyChangeAbsolute.toFixed(2)}`}
-          icon={ChartIcon}
-          change={`${dailyChangeSign}${dailyChangePercent.toFixed(2)}%`}
-        />
-      </div>
-
-      {/* CHARTS */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-
-        {/* PORTFOLIO TREND */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-xl transition-colors">
-          <div className="mb-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-              Portfolio Value Trend
-            </p>
-            <p className="mt-1 text-xs text-[var(--text-secondary)]">
-              Last 6 Trading Days
-            </p>
+        {/* LOGO + BRAND */}
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent)] text-white font-bold">
+            AT
           </div>
-
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={portfolioValueData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--chart-grid)"
-                  vertical={false}
-                />
-
-                <XAxis
-                  dataKey="date"
-                  tick={{ fill: "var(--text-secondary)", fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-
-                <YAxis
-                  tick={{ fill: "var(--text-secondary)", fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(value) =>
-                    `$${(value / 1000).toFixed(1)}k`
-                  }
-                />
-
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="var(--chart-line)"
-                  strokeWidth={2.4}
-                  dot={{ r: 4, fill: "var(--chart-line)" }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* SECTOR ALLOCATION (Disabled for now) */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-xl transition-colors">
-          <div className="mb-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-              Sector Allocation
+          <div>
+            <p className="text-sm font-semibold text-[var(--text)]">
+              AcuTrader
             </p>
-            <p className="mt-1 text-xs text-[var(--text-secondary)]">
-              Portfolio by Sector (%)
-            </p>
-          </div>
-
-          {/* You can enable the Pie Chart later */}
-          <div className="h-64 flex items-center justify-center text-[var(--text-secondary)]">
-            <p className="text-sm opacity-70">
-              Pie chart coming soon…
+            <p className="text-xs text-[var(--text-secondary)]">
+              Your Virtual Trading Floor
             </p>
           </div>
         </div>
 
+        {/* Right side buttons: theme toggle + menu */}
+        <div className="flex items-center gap-2">
+          {/* THEME TOGGLE BUTTON */}
+          <button
+            onClick={toggleTheme}
+            className="rounded-xl p-2 border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--accent)]/20 transition"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5 text-yellow-300" />
+            ) : (
+              <Moon className="h-5 w-5 text-[var(--text)]" />
+            )}
+          </button>
+
+          {/* MOBILE MENU */}
+          <button
+            onClick={onMenuToggle}
+            className="inline-flex items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card)] p-2 text-[var(--text)] hover:bg-[var(--accent)]/20"
+            aria-label="Open navigation menu"
+          >
+            <svg
+              className="h-5 w-5"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              fill="none"
+            >
+              <path d="M4 6h16M4 12h16M4 18h16" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       </div>
-    </section>
+    </header>
+  );
+};
+
+/* -----------------------------------------------------
+   MOBILE MENU DRAWER
+----------------------------------------------------- */
+
+interface MobileMenuProps {
+  isOpen: boolean;
+  activeTab: Tab;
+  onTabChange: (tab: Tab) => void;
+  onClose: () => void;
+}
+
+const MobileMenu: React.FC<MobileMenuProps> = ({
+  isOpen,
+  activeTab,
+  onTabChange,
+  onClose,
+}) => {
+  if (!isOpen) return null;
+
+  const itemBase =
+    "w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors";
+  const itemActive = "bg-[var(--accent)] text-white";
+  const itemInactive = "text-[var(--text)] hover:bg-[var(--accent)]/20";
+
+  return (
+    <div className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden">
+      <div className="absolute inset-y-0 left-0 w-64 max-w-[80vw] bg-[var(--bg-secondary)] shadow-2xl">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+          <p className="text-sm font-semibold text-[var(--text)]">Navigation</p>
+          <button
+            onClick={onClose}
+            className="rounded-full p-2 text-[var(--text)] hover:bg-[var(--accent)]/20"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Items */}
+        <div className="space-y-2 px-3 py-2">
+          {NAV_ITEMS.map((item) => {
+            const tabName = item.href.substring(1) as Tab;
+            return (
+              <button
+                key={item.href}
+                className={cn(itemBase, activeTab === tabName ? itemActive : itemInactive)}
+                onClick={() => {
+                  onTabChange(tabName);
+                  onClose();
+                }}
+              >
+                {item.name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* -----------------------------------------------------
+   FOOTER
+----------------------------------------------------- */
+
+const Footer: React.FC = () => {
+  return (
+    <footer className="border-t border-[var(--border)] bg-[var(--bg-secondary)] lg:hidden fixed bottom-0 left-0 right-0 z-40">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2 text-[0.75rem] text-[var(--text-secondary)]">
+        AcuTrader MVP
+      </div>
+    </footer>
+  );
+};
+
+/* -----------------------------------------------------
+   MAIN PAGE
+----------------------------------------------------- */
+
+export default function DashboardPage() {
+  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const header = {
+    dashboard: {
+      title: "Portfolio Dashboard",
+      description: "Monitor your performance, balance, and asset allocation.",
+    },
+    stocks: {
+      title: "Stock Market",
+      description: "Browse stocks and execute simulated Buy/Sell orders.",
+    },
+    portfolio: {
+      title: "My Holdings",
+      description: "Review investments, average costs, and P/L.",
+    },
+    profile: {
+      title: "User Profile",
+      description: "Manage settings and preferences.",
+    },
+  }[activeTab];
+
+  return (
+    <div className="flex min-h-screen flex-col bg-[var(--bg)] text-[var(--text)] pb-16 lg:pb-0">
+
+      {/* NAV + MENU */}
+      <Navbar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onMenuToggle={() => setIsMenuOpen(true)}
+      />
+
+      <MobileMenu
+        isOpen={isMenuOpen}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onClose={() => setIsMenuOpen(false)}
+      />
+
+      {/* MAIN CONTENT */}
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-10 pt-6 lg:px-6 lg:pt-8 lg:mt-0 mt-16">
+        <div className="mb-5">
+          <h1 className="text-xl font-semibold sm:text-2xl text-[var(--text)]">
+            {header.title}
+          </h1>
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">
+            {header.description}
+          </p>
+        </div>
+
+        {/* Dynamic Sections */}
+        {activeTab === "dashboard" && <DashboardSection />}
+        {activeTab === "stocks" && <MarketSection />}
+        {activeTab === "portfolio" && <PortfolioSection />}
+        {activeTab === "profile" && <ProfileSection />}
+      </main>
+
+      {/* FOOTER */}
+      <Footer />
+    </div>
   );
 }

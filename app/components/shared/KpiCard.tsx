@@ -10,6 +10,7 @@ interface KPICardProps {
   accent?: string; // gradient override
   icon: LucideIcon;
   change?: string;
+  isPositive?: boolean;
 }
 
 export const KPICard: React.FC<KPICardProps> = ({
@@ -19,8 +20,9 @@ export const KPICard: React.FC<KPICardProps> = ({
   accent = "",
   icon: Icon,
   change,
+  isPositive: explicitPositive,
 }) => {
-  const isPositive = change?.startsWith("+");
+  const isPositive = explicitPositive !== undefined ? explicitPositive : change?.startsWith("+");
 
   // Accent logic:
   // - Daily P&L uses profit/loss colors
