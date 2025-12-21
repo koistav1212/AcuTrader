@@ -1,6 +1,6 @@
 "use client";
 
-import { peers, userPerformanceHistory, ChartDataPoint } from "../../lib/data/sim-data";
+import { peers, userPerformanceHistory, type PeerPerformancePoint } from "../../lib/data/sim-data";
 import { notFound } from "next/navigation";
 import { ArrowLeft, TrendingUp, Briefcase } from "lucide-react";
 import Link from "next/link";
@@ -81,7 +81,7 @@ export default function PeerComparisonPage({ params }: { params: { id: string } 
           <div className="flex-grow z-10 text-center md:text-left space-y-2">
              <h1 className="text-2xl font-bold text-[var(--text)]">Performance Comparison</h1>
              <p className="text-[var(--text-secondary)] max-w-lg mx-auto md:mx-0">
-                Analyze how your portfolio performs against {peer.name}'s strategy over time.
+                Analyze how your portfolio performs against {peer.name}&apos;s strategy over time.
              </p>
           </div>
       </div>
@@ -145,7 +145,7 @@ export default function PeerComparisonPage({ params }: { params: { id: string } 
                  <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
                     <Briefcase className="w-4 h-4"/>
                  </div>
-                 <h2 className="text-lg font-bold text-[var(--text)]">{peer.name}'s Top Holdings</h2>
+                 <h2 className="text-lg font-bold text-[var(--text)]">{peer.name}&apos;s Top Holdings</h2>
             </div>
             
             <div className="flex-grow overflow-auto pr-2 space-y-3 custom-scrollbar">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useUser } from "../../../context/UserContext";
 import { cn } from "../../../lib/utils";
 
@@ -73,8 +74,8 @@ export default function StockOrderForm({ symbol, currentPrice, logo, name, marke
   return (
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1.5 shadow-sm">
-          <img src={logo} alt={symbol} className="w-full h-full object-contain" />
+        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1.5 shadow-sm overflow-hidden text-center relative">
+          <Image src={logo} alt={symbol} width={40} height={40} className="w-full h-full object-contain" unoptimized />
         </div>
         <div>
           <h3 className="text-lg font-bold text-[var(--text)]">Trade {symbol}</h3>

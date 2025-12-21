@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { NAV_ITEMS } from "../../lib/constants/nav";
 
 export function Footer() {
@@ -10,7 +11,7 @@ export function Footer() {
         
         {/* Brand & Icon */}
         <div className="flex items-center space-x-3">
-          <img src="/main_icon.png" alt="AcuTrader" className="h-10 w-10 object-contain rounded-lg" />
+          <Image src="/main_icon.png" alt="AcuTrader" width={40} height={40} className="object-contain rounded-lg" />
           <span className="text-xl font-bold tracking-tight text-[var(--text)]">
             AcuTrader
           </span>

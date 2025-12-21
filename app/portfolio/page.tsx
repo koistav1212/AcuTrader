@@ -85,7 +85,7 @@ export default function PortfolioSection() {
   if (enrichedHoldings.length === 0) {
       return (
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center shadow-sm">
-              <p className="text-[var(--text-secondary)]">You don't have any holdings yet.</p>
+              <p className="text-[var(--text-secondary)]">You don&apos;t have any holdings yet.</p>
           </div>
       )
   }

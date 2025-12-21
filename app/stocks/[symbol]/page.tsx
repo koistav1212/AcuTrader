@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { cn } from "../../lib/utils";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import StockOrderForm from "./_components/StockOrderForm";
 import { Brain, Activity, TrendingUp, Zap, Scale, BarChart3, AlertCircle } from "lucide-react";
@@ -137,10 +138,13 @@ export default function StockDetail() {
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center p-2 shadow-sm overflow-hidden shrink-0">
-            <img 
+            <Image 
                 src={logoUrl} 
                 alt={symbolStr} 
+                width={64}
+                height={64}
                 className="w-full h-full object-contain"
+                unoptimized
                 onError={(e) => {
                     // Fallback if needed, though we usually have a URL
                     (e.target as HTMLImageElement).style.visibility = 'hidden'; 

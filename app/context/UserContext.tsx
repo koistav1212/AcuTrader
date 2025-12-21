@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 // Define types based on the user's requirements/external API
@@ -68,27 +68,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
 
-  useEffect(() => {
-    // Check for existing token on mount
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
 
-    if (token && savedUser) {
-        try {
-            setUser(JSON.parse(savedUser));
-            fetchUserData(token); 
-        } catch (e) {
-            console.error("Failed to parse user data", e);
-            logout();
-        }
-    } else {
-        setLoading(false);
-        // If no token found, redirect to authentication page
-        if (window.location.pathname !== '/') {
-             router.push('/');
-        }
-    }
-  }, []);
 
   // Update set of symbols whenever watchlist changes
   useEffect(() => {
@@ -104,7 +84,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
   };
 
-  const fetchUserData = async (token: string) => {
+  const fetchUserData = useCallback(async (token: string) => {
     setLoading(true);
     try {
         const headers = getHeaders(token);
@@ -147,16 +127,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     } finally {
         setLoading(false);
     }
-  };
+  }, [API_BASE_URL]);
 
-  const login = (token: string, userData: User) => {
+  const login = useCallback((token: string, userData: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     fetchUserData(token);
-  };
+  }, [fetchUserData]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
@@ -164,7 +144,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setWatchlist([]);
     setTransactions([]);
     router.push('/api/auth/login'); // Redirect to login
-  };
+  }, [router]);
 
   const toggleWatchlist = async (symbol: string) => {
     try {
@@ -234,10 +214,32 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
       const token = localStorage.getItem('token');
       if (token) await fetchUserData(token);
-  };
+  }, [fetchUserData]);
+
+  useEffect(() => {
+    // Check for existing token on mount
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+
+    if (token && savedUser) {
+        try {
+            setUser(JSON.parse(savedUser));
+            fetchUserData(token); 
+        } catch (e) {
+            console.error("Failed to parse user data", e);
+            logout();
+        }
+    } else {
+        setLoading(false);
+        // If no token found, redirect to authentication page
+        if (window.location.pathname !== '/') {
+             router.push('/');
+        }
+    }
+  }, [fetchUserData, logout, router]);
 
   return (
     <UserContext.Provider value={{
