@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import StockOrderForm from "./_components/StockOrderForm";
 import { Brain, Activity, TrendingUp, Zap, Scale, BarChart3, AlertCircle } from "lucide-react";
+import StockChart from "../../../components/charts/StockChart";
 
 export default function StockDetail() {
   const params = useParams();
@@ -194,6 +195,9 @@ export default function StockDetail() {
         
         {/* 📉 LEFT COLUMN: STATS GRIDS */}
         <div className="lg:col-span-2 space-y-6">
+
+          {/* 🕯️ CANDLESTICK CHART */}
+          <StockChart symbol={symbolStr} />
 
           {/* 📊 ANALYTICS SECTION (New MBA Feature) */}
           <AnalyticsSection quote={quoteData} />
