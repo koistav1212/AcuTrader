@@ -55,7 +55,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onToggle }) => {
     setIsLoading(true);
     
     try {
-      const response = await fetch("/api/auth/register", {
+       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
+    
+      const response =  await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
