@@ -15,7 +15,7 @@ export default function StockDetail() {
 
   const [quote, setQuote] = useState<any>(null);
   const [priceChanges, setPriceChanges] = useState<any>(null);
-// const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function StockDetail() {
                 if (stored) {
                     cachedQuote = JSON.parse(stored);
                     setQuote(cachedQuote);
-                    setLoading(false);
+                    // Don't stop loading here if we want to refresh/augment with trending data
                 }
             } catch (err) {
                 console.warn("Error parsing stored stock data", err);
@@ -43,26 +43,65 @@ export default function StockDetail() {
 
         const promises = [];
 
-        // Fetch quote only if not cached
+        // 1. Fetch Basic Quote (if not cached, or to refresh)
+        // We will prioritize "trending" data below if available
         if (!cachedQuote) {
              promises.push(
                 fetch(`${baseUrl}/market/quote/${symbol}`)
                   .then(res => res.json())
-                  .then(data => setQuote(data))
+                  .then(data => {
+                      if (!cachedQuote) setQuote(data);
+                      return data;
+                  })
+                  .catch(e => console.error("Quote fetch error", e))
              );
         }
 
-        // Always fetch price changes and recommendations
+        // 2. Fetch Trending Data to augment (Rich Data Source) - Standardized Logic
+        promises.push(
+            fetch(`${baseUrl}/market/search?q=${symbol}`)
+                .then(res => res.json())
+                .then(data => {
+                    let trendingList: any[] = [];
+                    
+                    // robust handling for json/Stocks/data
+                    if (Array.isArray(data)) {
+                        trendingList = data;
+                    } else if (data.Stocks && Array.isArray(data.Stocks)) {
+                        trendingList = data.Stocks;
+                    } else if (data.data && Array.isArray(data.data)) {
+                        trendingList = data.data;
+                    }
+
+                    // Findings matching symbol
+                    const match = trendingList.find((item: any) => 
+                        item.symbol === symbol || item.symbol === symbol.toUpperCase()
+                    );
+
+                    if (match) {
+                        console.log("Found rich data in trending:", match);
+                        setQuote((prev: any) => ({ ...prev, ...match }));
+                    }
+                })
+                .catch(e => console.error("Trending/Search fetch error", e))
+        );
+
+        // 3. Price Changes
         promises.push(
             fetch(`${baseUrl}/market/price-change/${symbol}`)
               .then(res => res.json())
               .then(data => setPriceChanges(data))
+              .catch(e => console.error("Price change fetch error", e))
         );
 
+        // 4. Recommendations (Analyst Ratings)
         promises.push(
             fetch(`${baseUrl}/market/recommendations/${symbol}`)
               .then(res => res.json())
-              // .then(data => setRecommendations(data)) 
+              .then(data => {
+                  if (Array.isArray(data)) setRecommendations(data);
+              })
+              .catch(e => console.error("Recs fetch error", e))
         );
 
         await Promise.all(promises);
@@ -110,17 +149,20 @@ export default function StockDetail() {
 
   const quoteData = quote || {}; 
   const symbolStr = quoteData.symbol || symbol;
-  const name = quoteData.displayName || quoteData.shortName || quoteData.longName || quoteData.name || symbol;
-  const price = quoteData.regularMarketPrice || quoteData.current_price || 0;
+  const name = quoteData.displayName || quoteData.shortName || quoteData.longName || quoteData.name || quoteData.instrument_name || symbol;
+  const price = quoteData.regularMarketPrice || quoteData.current_price || quoteData.price || 0;
   const change = quoteData.regularMarketChange || quoteData.change || 0;
-  const percentChange = quoteData.regularMarketChangePercent || quoteData.percent_change || 0;
-  const isUp = change >= 0;
+  const percentChange = quoteData.regularMarketChangePercent || quoteData.percent_change || quoteData.change_percent || 0;
+  const isUp = change >= 0 || (quoteData.is_up !== undefined ? quoteData.is_up : percentChange >= 0);
   const currency = quoteData.currency || "USD";
   const exchange = quoteData.fullExchangeName || quoteData.exchange || "";
   const marketState = quoteData.marketState || "CLOSED";
   
   // Try to get logo from the enriched object or fallback
   const logoUrl = quoteData.logo || quoteData.image || `https://financialmodelingprep.com/image-stock/${symbol}.png`;
+
+  // Get latest recommendation for gauge
+  const latestRec = recommendations && recommendations.length > 0 ? recommendations[0] : null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
@@ -210,8 +252,8 @@ export default function StockDetail() {
                <StatItem label="High" value={`$${quoteData.regularMarketDayHigh?.toFixed(2) || "-"}`} />
                <StatItem label="Low" value={`$${quoteData.regularMarketDayLow?.toFixed(2) || "-"}`} />
                <StatItem label="Previous Close" value={`$${quoteData.regularMarketPreviousClose?.toFixed(2) || "-"}`} />
-               <StatItem label="Volume" value={formatNumber(quoteData.regularMarketVolume)} />
-               <StatItem label="Avg Vol (3M)" value={formatNumber(quoteData.averageDailyVolume3Month)} />
+               <StatItem label="Volume" value={formatNumber(quoteData.regularMarketVolume || quoteData.volume)} />
+               <StatItem label="Avg Vol (3M)" value={formatNumber(quoteData.averageDailyVolume3Month || quoteData.avg_volume)} />
                <StatItem label="Bid" value={`${quoteData.bid?.toFixed(2) || "-"} x ${quoteData.bidSize || 0}`} />
                <StatItem label="Ask" value={`${quoteData.ask?.toFixed(2) || "-"} x ${quoteData.askSize || 0}`} />
                <StatItem label="Beta (5Y)" value={quoteData.beta?.toFixed(2) || "-"} />
@@ -222,7 +264,7 @@ export default function StockDetail() {
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-[var(--text)] mb-4 border-b border-[var(--border)] pb-2">Valuation & Financials</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-8">
-               <StatItem label="Market Cap" value={`$${formatNumber(quoteData.marketCap)}`} />
+               <StatItem label="Market Cap" value={`$${formatNumber(quoteData.marketCap || quoteData.market_cap)}`} />
                <StatItem label="PE Ratio (TTM)" value={quoteData.trailingPE?.toFixed(2) || "-"} />
                <StatItem label="Forward PE" value={quoteData.forwardPE?.toFixed(2) || "-"} />
                <StatItem label="EPS (TTM)" value={`$${quoteData.epsTrailingTwelveMonths?.toFixed(2) || "-"}`} />
@@ -245,6 +287,9 @@ export default function StockDetail() {
                <StatItem label="Analyst Rating" value={quoteData.averageAnalystRating || "-"} />
              </div>
           </div>
+          
+           {/* ANALYST RATING GAUGE */}
+           {latestRec && <AnalystRatingGauge recommendation={latestRec} />}
           
            {/* ABOUT / DESCRIPTION (Fallback if exists) */}
            {quoteData.description && (
@@ -325,7 +370,7 @@ function getFundamentalInsights(q: any) {
   }
 
   // 4. Market Health (Cap)
-  const cap = q.marketCap || 0;
+  const cap = q.marketCap || q.market_cap || 0;
   let capDesc = "Small Cap";
   if (cap > 200e9) capDesc = "Mega Cap (Stable)";
   else if (cap > 10e9) capDesc = "Large Cap (Established)";
@@ -348,12 +393,13 @@ function getTechnicalInsights(q: any) {
     const insights = [];
 
     // 1. Trend Strength (Golden/Death Cross proxy)
+    // Note: trending API returns fiftyDayAverage and twoHundredDayAverage
     if (q.fiftyDayAverage && q.twoHundredDayAverage) {
         const title = q.fiftyDayAverage > q.twoHundredDayAverage ? "Bullish Trend" : "Bearish Trend";
         const status = q.fiftyDayAverage > q.twoHundredDayAverage ? "positive" : "negative";
         insights.push({
             label: "Long-Term Trend",
-            value: `${title} (50D > 200D is ${status === 'positive' ? 'True' : 'False'})`,
+            value: `${title}`,
             status
         });
     }
@@ -370,6 +416,7 @@ function getTechnicalInsights(q: any) {
     }
 
     // 3. Volatility (High/Low Range)
+    // q.regularMarketDayRange is {low, high} from trending api
     if (q.regularMarketDayRange && q.regularMarketPrice) {
        const range = q.regularMarketDayRange;
        const spread = ((range.high - range.low) / q.regularMarketPrice) * 100;
@@ -392,7 +439,7 @@ function getTechnicalInsights(q: any) {
     // 5. Volume Liquidity
     const vol = q.regularMarketVolume || 0;
     const avgVol = q.averageDailyVolume10Day || vol;
-    const relVol = vol / avgVol;
+    const relVol = avgVol ? vol / avgVol : 1;
     insights.push({
         label: "Relative Volume",
         value: `${relVol.toFixed(2)}x (vs 10-Day Avg)`,
@@ -469,6 +516,74 @@ function AnalyticsSection({ quote }: { quote: any }) {
                 </ul>
             </div>
 
+        </div>
+    );
+}
+
+function AnalystRatingGauge({ recommendation }: { recommendation: any }) {
+    if (!recommendation) return null;
+    
+    // { "period": "0m", "strongBuy": 5, "buy": 24, "hold": 15, "sell": 1, "strongSell": 3 }
+    const { strongBuy, buy, hold, sell, strongSell } = recommendation;
+    const total = strongBuy + buy + hold + sell + strongSell;
+    
+    if (total === 0) return null;
+
+    // Calculate a score from 1 (Strong Sell) to 5 (Strong Buy)
+    // Strong Sell = 1, Sell = 2, Hold = 3, Buy = 4, Strong Buy = 5
+    const score = (
+        (strongSell * 1) + (sell * 2) + (hold * 3) + (buy * 4) + (strongBuy * 5)
+    ) / total;
+    
+    // Rotation mapping: 1 -> 0deg, 5 -> 180deg
+    // 1-5 range maps to 0-180
+    // (score - 1) / 4 * 180
+    const rotation = ((score - 1) / 4) * 180;
+
+    let ratingText = "Neutral";
+    let colorClass = "text-yellow-500";
+    if (score >= 4.5) { ratingText = "Strong Buy"; colorClass = "text-[var(--profit)]"; }
+    else if (score >= 3.5) { ratingText = "Buy"; colorClass = "text-green-400"; }
+    else if (score >= 2.5) { ratingText = "Hold"; colorClass = "text-yellow-500"; }
+    else if (score >= 1.5) { ratingText = "Sell"; colorClass = "text-red-400"; }
+    else { ratingText = "Strong Sell"; colorClass = "text-[var(--loss)]"; }
+
+    return (
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+             <div className="flex items-center gap-2 text-[var(--text-secondary)] mb-6 border-b border-[var(--border)] pb-2">
+                <AlertCircle className="w-4 h-4" />
+                <h3 className="text-lg font-semibold text-[var(--text)]">Analyst Rating</h3>
+            </div>
+            
+            <div className="flex flex-col items-center relative">
+                <div className="relative w-48 h-24 overflow-hidden">
+                    {/* Gauge Arc Background */}
+                    <div className="absolute top-0 left-0 w-full h-48 bg-gray-700/30 rounded-full border-8 border-gray-600/30 box-border -z-10"></div>
+                     
+                     {/* Colored Arc - We can simulate gradients with a background image or simpler css */}
+                     <div className="absolute top-0 left-0 w-full h-48 rounded-full border-8 border-transparent border-t-green-500/80 border-l-yellow-500/80 border-r-red-500/80 blur-lg opacity-50"></div>
+                     
+                    {/* Needle */}
+                    <div 
+                        className="absolute bottom-0 left-1/2 w-1 h-24 bg-white origin-bottom transition-transform duration-1000 ease-out z-10"
+                        style={{ transform: `translateX(-50%) rotate(${rotation - 90}deg)` }}
+                    >
+                        <div className="w-2 h-2 bg-white rounded-full absolute bottom-[-4px] left-[-2px]" />
+                    </div>
+                </div>
+                
+                <div className="mt-4 text-center">
+                    <div className={cn("text-2xl font-bold", colorClass)}>{ratingText}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mt-1">Based on {total} analysts</div>
+                </div>
+                
+                {/* Legend */}
+                <div className="w-full flex justify-between text-[10px] text-[var(--text-secondary)] mt-4 px-4 uppercase font-bold tracking-wider">
+                    <span>Sell</span>
+                    <span>Hold</span>
+                    <span>Buy</span>
+                </div>
+            </div>
         </div>
     );
 }

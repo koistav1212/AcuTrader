@@ -26,6 +26,7 @@ import {
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { KPICard } from "../components/shared/KpiCard";
+import MarketOverview from "../components/dashboard/MarketOverview";
 import {
   portfolioValueData,
   STARTING_BALANCE,
@@ -264,6 +265,9 @@ export default function DashboardSection() {
         </div>
 
       </div>
+
+      {/* MARKET OVERVIEW - TOP GAINERS & LOSERS */}
+      <MarketOverview />
 
       {/* TACTICAL MOVERS */}
       <div className="grid gap-6 md:grid-cols-2">
