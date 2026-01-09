@@ -6,16 +6,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import StockOrderForm from "./_components/StockOrderForm";
-import { Brain, Activity, TrendingUp, Zap, Scale, BarChart3, AlertCircle } from "lucide-react";
+import { Brain, Activity, TrendingUp, Zap, Scale, BarChart3, AlertCircle, DollarSign, PieChart, Briefcase } from "lucide-react";
 import StockChart from "../../../components/charts/StockChart";
 
 export default function StockDetail() {
   const params = useParams();
   const symbol = params.symbol as string;
 
-  const [quote, setQuote] = useState<any>(null);
-  const [priceChanges, setPriceChanges] = useState<any>(null);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [stockData, setStockData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,85 +24,39 @@ export default function StockDetail() {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
         
-        // Check session storage for quote data
-        let cachedQuote = null;
-        if (typeof window !== 'undefined') {
-            try {
-                const stored = sessionStorage.getItem(`stock_data_${symbol}`);
-                if (stored) {
-                    cachedQuote = JSON.parse(stored);
-                    setQuote(cachedQuote);
-                    // Don't stop loading here if we want to refresh/augment with trending data
-                }
-            } catch (err) {
-                console.warn("Error parsing stored stock data", err);
-            }
-        }
+        // Fetch Detailed Stock Data from Search API
+        // This single endpoint now returns all necessary details
+        const res = await fetch(`${baseUrl}/market/search?q=${symbol}`);
+        const data = await res.json();
+        
+        let stockItem = null;
 
-        const promises = [];
-
-        // 1. Fetch Basic Quote (if not cached, or to refresh)
-        // We will prioritize "trending" data below if available
-        if (!cachedQuote) {
-             promises.push(
-                fetch(`${baseUrl}/market/quote/${symbol}`)
-                  .then(res => res.json())
-                  .then(data => {
-                      if (!cachedQuote) setQuote(data);
-                      return data;
-                  })
-                  .catch(e => console.error("Quote fetch error", e))
+        // Robust handling for response structure { "Stocks": [...] }
+        if (data.Stocks && Array.isArray(data.Stocks)) {
+            // Find exact match or first item if unique
+             stockItem = data.Stocks.find((item: any) => 
+                item.symbol === symbol || item.symbol === symbol.toUpperCase()
+            );
+             // If no exact match found but we have results, maybe take the first one? 
+             // Ideally the API returns the requested symbol.
+             if (!stockItem && data.Stocks.length > 0) {
+                 stockItem = data.Stocks[0];
+             }
+        } else if (Array.isArray(data)) {
+            stockItem = data.find((item: any) => 
+                 item.symbol === symbol || item.symbol === symbol.toUpperCase()
              );
         }
 
-        // 2. Fetch Trending Data to augment (Rich Data Source) - Standardized Logic
-        promises.push(
-            fetch(`${baseUrl}/market/search?q=${symbol}`)
-                .then(res => res.json())
-                .then(data => {
-                    let trendingList: any[] = [];
-                    
-                    // robust handling for json/Stocks/data
-                    if (Array.isArray(data)) {
-                        trendingList = data;
-                    } else if (data.Stocks && Array.isArray(data.Stocks)) {
-                        trendingList = data.Stocks;
-                    } else if (data.data && Array.isArray(data.data)) {
-                        trendingList = data.data;
-                    }
-
-                    // Findings matching symbol
-                    const match = trendingList.find((item: any) => 
-                        item.symbol === symbol || item.symbol === symbol.toUpperCase()
-                    );
-
-                    if (match) {
-                        console.log("Found rich data in trending:", match);
-                        setQuote((prev: any) => ({ ...prev, ...match }));
-                    }
-                })
-                .catch(e => console.error("Trending/Search fetch error", e))
-        );
-
-        // 3. Price Changes
-        promises.push(
-            fetch(`${baseUrl}/market/price-change/${symbol}`)
-              .then(res => res.json())
-              .then(data => setPriceChanges(data))
-              .catch(e => console.error("Price change fetch error", e))
-        );
-
-        // 4. Recommendations (Analyst Ratings)
-        promises.push(
-            fetch(`${baseUrl}/market/recommendations/${symbol}`)
-              .then(res => res.json())
-              .then(data => {
-                  if (Array.isArray(data)) setRecommendations(data);
-              })
-              .catch(e => console.error("Recs fetch error", e))
-        );
-
-        await Promise.all(promises);
+        if (stockItem) {
+            setStockData(stockItem);
+            // Optionally cache this rich data
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem(`stock_data_${symbol}`, JSON.stringify(stockItem));
+            }
+        } else {
+             console.warn("Stock not found in search results");
+        }
 
       } catch (e) {
         console.error("Failed to fetch stock data", e);
@@ -123,7 +75,7 @@ export default function StockDetail() {
     );
   }
 
-  if (!quote) {
+  if (!stockData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <h2 className="text-xl font-bold text-[var(--text)]">Stock not found</h2>
@@ -137,32 +89,37 @@ export default function StockDetail() {
     );
   }
 
-// Helper to format large numbers
-  const formatNumber = (num: number) => {
-    if (num === undefined || num === null) return "-";
-    if (num >= 1e12) return (num / 1e12).toFixed(2) + "T";
-    if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
-    if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
-    if (num >= 1e3) return (num / 1e3).toFixed(2) + "K";
-    return num.toLocaleString();
+// Helper to format large numbers (handling strings like "4.50T" or raw numbers)
+  const formatValue = (val: any) => {
+    if (val === undefined || val === null) return "-";
+    if (typeof val === 'string') return val; // Return string as-is (e.g., "4.50T", "53.01%")
+    
+    // If it's a raw number, format it
+    if (typeof val === 'number') {
+        if (val >= 1e12) return (val / 1e12).toFixed(2) + "T";
+        if (val >= 1e9) return (val / 1e9).toFixed(2) + "B";
+        if (val >= 1e6) return (val / 1e6).toFixed(2) + "M";
+        if (val >= 1e3) return (val / 1e3).toFixed(2) + "K";
+        return val.toLocaleString();
+    }
+    return val;
   };
 
-  const quoteData = quote || {}; 
-  const symbolStr = quoteData.symbol || symbol;
-  const name = quoteData.displayName || quoteData.shortName || quoteData.longName || quoteData.name || quoteData.instrument_name || symbol;
-  const price = quoteData.regularMarketPrice || quoteData.current_price || quoteData.price || 0;
-  const change = quoteData.regularMarketChange || quoteData.change || 0;
-  const percentChange = quoteData.regularMarketChangePercent || quoteData.percent_change || quoteData.change_percent || 0;
-  const isUp = change >= 0 || (quoteData.is_up !== undefined ? quoteData.is_up : percentChange >= 0);
-  const currency = quoteData.currency || "USD";
-  const exchange = quoteData.fullExchangeName || quoteData.exchange || "";
-  const marketState = quoteData.marketState || "CLOSED";
+  // Safe Number parser for things that definitely need to be numbers (like price for order form)
+  const parseNum = (val: any) => {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') return parseFloat(val.replace(/,/g, ''));
+      return 0;
+  };
   
-  // Try to get logo from the enriched object or fallback
-  const logoUrl = quoteData.logo || quoteData.image || `https://financialmodelingprep.com/image-stock/${symbol}.png`;
-
-  // Get latest recommendation for gauge
-  const latestRec = recommendations && recommendations.length > 0 ? recommendations[0] : null;
+  const s = stockData; // Short alias
+  const currentPrice = parseNum(s.current_price || s.price || 0);
+  const change = parseNum(s.change || 0);
+  const percentChange = parseNum(s.percent_change || 0);
+  const isUp = s.is_up !== undefined ? s.is_up : change >= 0;
+  
+  // Use generic logo service since new API might not provide 'logo' directly
+  const logoUrl = s.logo || `https://financialmodelingprep.com/image-stock/${s.symbol}.png`;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
@@ -183,39 +140,34 @@ export default function StockDetail() {
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center p-2 shadow-sm overflow-hidden shrink-0">
             <Image 
                 src={logoUrl} 
-                alt={symbolStr} 
+                alt={s.symbol} 
                 width={64}
                 height={64}
                 className="w-full h-full object-contain"
                 unoptimized
                 onError={(e) => {
-                    // Fallback if needed, though we usually have a URL
                     (e.target as HTMLImageElement).style.visibility = 'hidden'; 
                 }}
             />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[var(--text)] flex items-center gap-2 flex-wrap">
-              {name}
+              {s.name}
               <span className="text-sm px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-normal border border-[var(--border)]">
-                {symbolStr}
+                {s.symbol}
               </span>
             </h1>
             <div className="text-sm text-[var(--text-secondary)] mt-1 flex flex-wrap gap-x-3 gap-y-1">
-              <span>{exchange}</span>
+              <span>{s.currency || "USD"}</span>
               <span>•</span>
-              <span>{currency}</span>
-              <span>•</span>
-              <span className={marketState === "REGULAR" || marketState === "OPEN" ? "text-green-500" : "text-amber-500"}>
-                 Market: {marketState}
-              </span>
+              <span className="text-[var(--accent)]">{s.exchange || "NASDAQ/NYSE"}</span>
             </div>
           </div>
         </div>
 
         <div className="text-right w-full md:w-auto">
           <div className="text-4xl font-bold text-[var(--text)] tracking-tight">
-            ${price.toFixed(2)}
+            ${currentPrice.toFixed(2)}
           </div>
           <div className={cn("text-lg font-semibold flex items-center md:justify-end gap-2", isUp ? "text-[var(--profit)]" : "text-[var(--loss)]")}>
             <span>{isUp ? "▲" : "▼"}</span>
@@ -223,13 +175,8 @@ export default function StockDetail() {
             <span>({Math.abs(percentChange).toFixed(2)}%)</span>
           </div>
           <div className="text-xs text-[var(--text-secondary)] mt-1">
-            {quoteData.regularMarketTime ? `Last update: ${new Date(quoteData.regularMarketTime).toLocaleString()}` : ""}
+             Last update: {s.datetime ? new Date(s.datetime).toLocaleString() : new Date().toLocaleString()}
           </div>
-          {quoteData.postMarketPrice && quoteData.marketState === "CLOSED" && (
-             <div className="text-xs text-[var(--text-secondary)] mt-1">
-                Post-Market: ${quoteData.postMarketPrice.toFixed(2)} ({quoteData.postMarketChangePercent?.toFixed(2)}%)
-             </div>
-          )}
         </div>
       </div>
 
@@ -239,78 +186,136 @@ export default function StockDetail() {
         <div className="lg:col-span-2 space-y-6">
 
           {/* 🕯️ CANDLESTICK CHART */}
-          <StockChart symbol={symbolStr} />
+          <StockChart symbol={s.symbol} />
 
-          {/* 📊 ANALYTICS SECTION (New MBA Feature) */}
-          <AnalyticsSection quote={quoteData} />
+          {/* 📊 ANALYTICS SECTION (MBA Insight) */}
+          <AnalyticsSection stock={s} />
           
           {/* TRADING INFO CARD */}
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[var(--text)] mb-4 border-b border-[var(--border)] pb-2">Trading Information</h3>
+            <h3 className="text-lg font-semibold text-[var(--text)] mb-4 border-b border-[var(--border)] pb-2 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-[var(--accent)]" /> 
+                Trading Information
+            </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-8">
-               <StatItem label="Open" value={`$${quoteData.regularMarketOpen?.toFixed(2) || "-"}`} />
-               <StatItem label="High" value={`$${quoteData.regularMarketDayHigh?.toFixed(2) || "-"}`} />
-               <StatItem label="Low" value={`$${quoteData.regularMarketDayLow?.toFixed(2) || "-"}`} />
-               <StatItem label="Previous Close" value={`$${quoteData.regularMarketPreviousClose?.toFixed(2) || "-"}`} />
-               <StatItem label="Volume" value={formatNumber(quoteData.regularMarketVolume || quoteData.volume)} />
-               <StatItem label="Avg Vol (3M)" value={formatNumber(quoteData.averageDailyVolume3Month || quoteData.avg_volume)} />
-               <StatItem label="Bid" value={`${quoteData.bid?.toFixed(2) || "-"} x ${quoteData.bidSize || 0}`} />
-               <StatItem label="Ask" value={`${quoteData.ask?.toFixed(2) || "-"} x ${quoteData.askSize || 0}`} />
-               <StatItem label="Beta (5Y)" value={quoteData.beta?.toFixed(2) || "-"} />
+               <StatItem label="Open" value={s.open} prefix="$" />
+               <StatItem label="Previous Close" value={s.previous_close} prefix="$" />
+               <StatItem label="Day High" value={s.day_high} prefix="$" />
+               <StatItem label="Day Low" value={s.day_low} prefix="$" />
+               <StatItem label="Volume" value={s.volume} />
+               <StatItem label="Avg Volume" value={s.average_volume} />
+               <StatItem label="Bid" value={s.bid || "-"} />
+               <StatItem label="Ask" value={s.ask || "-"} />
+               <StatItem label="52 Week High" value={s.fifty_two_week_high} prefix="$" />
+               <StatItem label="52 Week Low" value={s.fifty_two_week_low} prefix="$" />
             </div>
           </div>
 
-          {/* VALUATION & FINANCIALS CARD */}
+          {/* VALUATION & RATIOS CARD */}
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[var(--text)] mb-4 border-b border-[var(--border)] pb-2">Valuation & Financials</h3>
+            <h3 className="text-lg font-semibold text-[var(--text)] mb-4 border-b border-[var(--border)] pb-2 flex items-center gap-2">
+                <Scale className="w-5 h-5 text-[var(--accent)]" />
+                Valuation & Ratios
+            </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-8">
-               <StatItem label="Market Cap" value={`$${formatNumber(quoteData.marketCap || quoteData.market_cap)}`} />
-               <StatItem label="PE Ratio (TTM)" value={quoteData.trailingPE?.toFixed(2) || "-"} />
-               <StatItem label="Forward PE" value={quoteData.forwardPE?.toFixed(2) || "-"} />
-               <StatItem label="EPS (TTM)" value={`$${quoteData.epsTrailingTwelveMonths?.toFixed(2) || "-"}`} />
-               <StatItem label="EPS Forward" value={`$${quoteData.epsForward?.toFixed(2) || "-"}`} />
-               <StatItem label="Price/Book" value={quoteData.priceToBook?.toFixed(2) || "-"} />
-               <StatItem label="Book Value" value={`$${quoteData.bookValue?.toFixed(2) || "-"}`} />
-               <StatItem label="Dividend Rate" value={`$${quoteData.trailingAnnualDividendRate?.toFixed(2) || "0.00"}`} />
-               <StatItem label="Dividend Yield" value={`${(quoteData.trailingAnnualDividendYield * 100)?.toFixed(2) || "0.00"}%`} />
+               <StatItem label="Market Cap" value={s.market_cap} />
+               <StatItem label="Enterprise Value" value={s.enterprise_value} />
+               <StatItem label="PE Ratio" value={s.pe_ratio} />
+               <StatItem label="Forward PE" value={s.forward_pe} />
+               <StatItem label="Trailing PE" value={s.trailing_pe} />
+               <StatItem label="PEG Ratio" value={s.peg_ratio} />
+               <StatItem label="Price/Sales" value={s.price_to_sales} />
+               <StatItem label="Price/Book" value={s.price_to_book} />
+               <StatItem label="EV/Revenue" value={s.enterprise_value_to_revenue} />
+               <StatItem label="EV/EBITDA" value={s.enterprise_value_to_ebitda} />
             </div>
           </div>
 
-           {/* RANGES & AVERAGES CARD */}
+           {/* FINANCIAL STRENGTH CARD */}
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[var(--text)] mb-4 border-b border-[var(--border)] pb-2">Ranges & Averages</h3>
+             <h3 className="text-lg font-semibold text-[var(--text)] mb-4 border-b border-[var(--border)] pb-2 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-[var(--accent)]" />
+                Financial Strength
+             </h3>
              <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-8">
-               <StatItem label="52 Week Range" value={`${quoteData.fiftyTwoWeekRange?.low?.toFixed(2) || "-"} - ${quoteData.fiftyTwoWeekRange?.high?.toFixed(2) || "-"}`} />
-               <StatItem label="52 Week Change" value={`${quoteData.fiftyTwoWeekChangePercent?.toFixed(2) || "-"}%`} />
-               <StatItem label="50 Day Avg" value={`$${quoteData.fiftyDayAverage?.toFixed(2) || "-"}`} />
-               <StatItem label="200 Day Avg" value={`$${quoteData.twoHundredDayAverage?.toFixed(2) || "-"}`} />
-               <StatItem label="Analyst Rating" value={quoteData.averageAnalystRating || "-"} />
+                <StatItem label="Revenue" value={s.revenue} />
+                <StatItem label="Net Income" value={s.net_income} />
+                <StatItem label="Profit Margin" value={s.profit_margin} />
+                <StatItem label="Return on Assets" value={s.return_on_assets} />
+                <StatItem label="Return on Equity" value={s.return_on_equity} />
+                <StatItem label="Total Cash" value={s.total_cash} />
+                <StatItem label="Total Debt/Equity" value={s.total_debt_to_equity} />
+                <StatItem label="Lvd Free Cash Flow" value={s.levered_free_cash_flow} />
+                <StatItem label="EPS" value={s.eps} prefix="$" />
+                <StatItem label="Diluted EPS" value={s.diluted_eps} prefix="$" />
              </div>
           </div>
           
-           {/* ANALYST RATING GAUGE */}
-           {latestRec && <AnalystRatingGauge recommendation={latestRec} />}
-          
-           {/* ABOUT / DESCRIPTION (Fallback if exists) */}
-           {quoteData.description && (
-             <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-[var(--text)] mb-4">About {name}</h3>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                {quoteData.description}
-                </p>
-             </div>
-           )}
+           {/* ANALYST & DIVIDENDS - Compact Grid */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+                     <h3 className="text-lg font-semibold text-[var(--text)] mb-4 border-b border-[var(--border)] pb-2 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-[var(--accent)]" />
+                        Analyst Consensus
+                     </h3>
+                     <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-[var(--text-secondary)]">Analyst Rating</span>
+                            <span className={cn(
+                                "text-lg font-bold px-3 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border)]",
+                                (s.analyst_rating || "").toLowerCase().includes('buy') ? "text-[var(--profit)]" : 
+                                (s.analyst_rating || "").toLowerCase().includes('sell') ? "text-[var(--loss)]" : "text-[var(--text)]"
+                            )}>
+                                {s.analyst_rating || "N/A"}
+                            </span>
+                        </div>
+                         <div className="flex justify-between items-center">
+                            <span className="text-sm text-[var(--text-secondary)]">Price Target</span>
+                            <span className="text-lg font-bold text-[var(--text)]">
+                                {s.analyst_price_target || "-"}
+                            </span>
+                        </div>
+                         <div className="flex justify-between items-center">
+                            <span className="text-sm text-[var(--text-secondary)]">Target Est (1Y)</span>
+                            <span className="text-lg font-bold text-[var(--text)]">
+                                ${s.target_est_1y || "-"}
+                            </span>
+                        </div>
+                     </div>
+                </div>
+
+                <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+                     <h3 className="text-lg font-semibold text-[var(--text)] mb-4 border-b border-[var(--border)] pb-2 flex items-center gap-2">
+                        <PieChart className="w-5 h-5 text-[var(--accent)]" />
+                        Dividends
+                     </h3>
+                     <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                             <span className="text-sm text-[var(--text-secondary)]">Forward Dividend & Yield</span>
+                             <span className="text-base font-semibold text-[var(--text)]">
+                                 {s.forward_dividend_yield || "-"}
+                             </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                             <span className="text-sm text-[var(--text-secondary)]">Earnings Date</span>
+                             <span className="text-base font-semibold text-[var(--text)]">
+                                 {s.earnings_date || "-"}
+                             </span>
+                        </div>
+                     </div>
+                </div>
+           </div>
 
         </div>
 
         {/* 📈 RIGHT COLUMN: BUY/SELL FORM */}
         <div className="space-y-6">
           <StockOrderForm 
-            symbol={symbolStr} 
-            currentPrice={price} 
+            symbol={s.symbol} 
+            currentPrice={currentPrice} 
             logo={logoUrl} 
-            name={name} 
-            marketState={marketState}
+            name={s.name} 
+            marketState={isUp ? "OPEN" : "CLOSED"} // Approximation or we can fetch state if needed
           />
         </div>
 
@@ -323,63 +328,70 @@ export default function StockDetail() {
 // Component Helpers
 // -------------------------------------------------------------
 
-function StatItem({ label, value }: { label: string; value: string | number }) {
+function StatItem({ label, value, prefix = "" }: { label: string; value: string | number; prefix?: string }) {
+   // Helper to display nicely
+   const display = (value === undefined || value === null) ? "-" : `${prefix}${value}`;
+   
   return (
     <div>
-      <div className="text-xs text-[var(--text-secondary)] mb-1">{label}</div>
-      <div className="text-sm font-semibold text-[var(--text)]">{value}</div>
+      <div className="text-xs text-[var(--text-secondary)] mb-1 uppercase tracking-wider">{label}</div>
+      <div className="text-sm font-semibold text-[var(--text)] truncate" title={String(value)}>
+        {display}
+      </div>
     </div>
   );
 }
 
 // --- ANALYTICS ENGINE (User Requested MBA Projectable) ---
+// Updated to use the new flat API structure
 
-function getFundamentalInsights(q: any) {
+function getFundamentalInsights(s: any) {
   const insights = [];
 
   // 1. Valuation Check (PE)
-  if (q.forwardPE && q.trailingPE) {
-     const isUndervalued = q.forwardPE < q.trailingPE;
+  if (s.forward_pe && s.trailing_pe) {
+     const isUndervalued = s.forward_pe < s.trailing_pe;
      insights.push({
         label: "Valuation Outlook",
-        value: isUndervalued ? `Improving (Fwd PE ${q.forwardPE.toFixed(1)} < TTM)` : `Premium (Fwd PE ${q.forwardPE.toFixed(1)} > TTM)`,
+        value: isUndervalued ? `Improving (Fwd PE ${s.forward_pe} < TTM)` : `Premium (Fwd PE ${s.forward_pe} > TTM)`,
         status: isUndervalued ? "positive" : "neutral"
      });
-  } else {
-     insights.push({ label: "Valuation", value: "Standard metrics unavailable", status: "neutral" });
   }
 
-  // 2. Efficiency (Price to Book)
-  if (q.priceToBook) {
-      const pb = q.priceToBook;
+  // 2. PEG Ratio
+  if (s.peg_ratio) {
       let status = "neutral";
-      let desc = "Fair Value";
-      if (pb < 1) { status = "positive"; desc = "Potentially Undervalued (<1.0)"; }
-      else if (pb > 5) { status = "negative"; desc = "High Premium (>5.0)"; }
-      insights.push({ label: "Asset Efficiency", value: `${desc} (P/B ${pb.toFixed(2)})`, status });
+      let desc = "Fairly Valued";
+      if (s.peg_ratio < 1) { status = "positive"; desc = "Undervalued Growth (<1.0)"; }
+      else if (s.peg_ratio > 2) { status = "negative"; desc = "Overvalued Growth (>2.0)"; }
+      insights.push({ label: "Growth Valuation (PEG)", value: `${desc} (${s.peg_ratio})`, status });
   }
 
-  // 3. Growth (EPS)
-  if (q.epsForward && q.epsTrailingTwelveMonths) {
-      const growth = q.epsForward > q.epsTrailingTwelveMonths;
+  // 3. Profitability
+  if (s.profit_margin) {
+      // "53.01%" string
+      const margin = parseFloat(s.profit_margin.replace('%', ''));
+      const isHigh = margin > 20;
       insights.push({
-          label: "EPS Trajectory",
-          value: growth ? `Growth Forecasted ($${q.epsTrailingTwelveMonths} → $${q.epsForward})` : "Contraction Forecasted",
-          status: growth ? "positive" : "negative"
+          label: "Profit Margin", 
+          value: isHigh ? `High Margins (${s.profit_margin})` : `Standard Margins (${s.profit_margin})`,
+          status: isHigh ? "positive" : "neutral"
       });
   }
 
-  // 4. Market Health (Cap)
-  const cap = q.marketCap || q.market_cap || 0;
-  let capDesc = "Small Cap";
-  if (cap > 200e9) capDesc = "Mega Cap (Stable)";
-  else if (cap > 10e9) capDesc = "Large Cap (Established)";
-  else if (cap > 2e9) capDesc = "Mid Cap (Growth)";
-  insights.push({ label: "Market Classification", value: capDesc, status: "neutral" });
+  // 4. Return on Equity
+  if (s.return_on_equity) {
+      const roe = parseFloat(s.return_on_equity.replace('%', ''));
+      insights.push({ 
+          label: "Return on Equity", 
+          value: roe > 15 ? `Strong Returns (${s.return_on_equity})` : `Average Returns (${s.return_on_equity})`, 
+          status: roe > 15 ? "positive" : "neutral" 
+      });
+  }
 
   // 5. Analyst Sentiment
-  const rating = q.averageAnalystRating || "N/A";
-  const isBuy = rating.toLowerCase().includes("buy") || rating.toLowerCase().includes("strong");
+  const rating = s.analyst_rating || "N/A";
+  const isBuy = rating.toLowerCase().includes("buy");
   insights.push({ 
       label: "Street Sentiment", 
       value: rating, 
@@ -389,71 +401,61 @@ function getFundamentalInsights(q: any) {
   return insights;
 }
 
-function getTechnicalInsights(q: any) {
+function getTechnicalInsights(s: any) {
     const insights = [];
 
-    // 1. Trend Strength (Golden/Death Cross proxy)
-    // Note: trending API returns fiftyDayAverage and twoHundredDayAverage
-    if (q.fiftyDayAverage && q.twoHundredDayAverage) {
-        const title = q.fiftyDayAverage > q.twoHundredDayAverage ? "Bullish Trend" : "Bearish Trend";
-        const status = q.fiftyDayAverage > q.twoHundredDayAverage ? "positive" : "negative";
+    // 1. Target Proximity
+    if (s.target_est_1y && s.current_price) {
+        const potential = ((s.target_est_1y - s.current_price) / s.current_price) * 100;
         insights.push({
-            label: "Long-Term Trend",
-            value: `${title}`,
-            status
+            label: "1y Target Upside",
+            value: `${potential.toFixed(2)}% upside to ${s.target_est_1y}`,
+            status: potential > 10 ? "positive" : "neutral"
         });
     }
 
-    // 2. Momentum (52 Week High proximity)
-    if (q.fiftyTwoWeekHigh && q.regularMarketPrice) {
-        const diff = (q.fiftyTwoWeekHigh - q.regularMarketPrice) / q.fiftyTwoWeekHigh;
+    // 2. 52 Week High Proximity
+    if (s.fifty_two_week_high && s.current_price) {
+        const diff = (s.fifty_two_week_high - s.current_price) / s.fifty_two_week_high;
         const nearHigh = diff < 0.05; // within 5%
         insights.push({
             label: "Momentum",
-            value: nearHigh ? "Strong (Trading near 52W High)" : `Retracing (${(diff * 100).toFixed(1)}% off High)`,
+            value: nearHigh ? "Testing Highs" : `Retracing (${(diff * 100).toFixed(1)}% off High)`,
             status: nearHigh ? "positive" : "neutral"
         });
     }
 
-    // 3. Volatility (High/Low Range)
-    // q.regularMarketDayRange is {low, high} from trending api
-    if (q.regularMarketDayRange && q.regularMarketPrice) {
-       const range = q.regularMarketDayRange;
-       const spread = ((range.high - range.low) / q.regularMarketPrice) * 100;
-       const isVolatile = spread > 3; // >3% intraday move
-       insights.push({
-           label: "Intraday Volatility",
-           value: isVolatile ? `High (${spread.toFixed(2)}% Swing)` : `Stable (${spread.toFixed(2)}% Swing)`,
-           status: isVolatile ? "negative" : "neutral" // Volatility usually risk
-       });
+    // 3. Short Term Trend (Day High/Low)
+    if (s.day_high && s.day_low && s.current_price) {
+        const range = s.day_high - s.day_low;
+        const pos = (s.current_price - s.day_low) / range; // 0 to 1 position in day range
+        insights.push({
+            label: "Intraday Strength",
+            value: pos > 0.7 ? "Closing Strong (High of Day)" : pos < 0.3 ? "Weak Close (Low of Day)" : "Neutral Consolidation",
+            status: pos > 0.7 ? "positive" : pos < 0.3 ? "negative" : "neutral"
+        });
     }
-
-    // 4. Alpha / Performance
-    const ytd = q.fiftyTwoWeekChangePercent || 0;
-    insights.push({
-        label: "Annual Alpha",
-        value: `${ytd > 0 ? "+" : ""}${ytd.toFixed(2)}% (1 Year Return)`,
-        status: ytd > 10 ? "positive" : ytd < -10 ? "negative" : "neutral"
-    });
-
-    // 5. Volume Liquidity
-    const vol = q.regularMarketVolume || 0;
-    const avgVol = q.averageDailyVolume10Day || vol;
-    const relVol = avgVol ? vol / avgVol : 1;
-    insights.push({
-        label: "Relative Volume",
-        value: `${relVol.toFixed(2)}x (vs 10-Day Avg)`,
-        status: relVol > 1.5 ? "positive" : "neutral"
-    });
+    
+    // 4. Volume Check
+    if (s.volume && s.average_volume && typeof s.average_volume === 'string') {
+        // "187,031,112"
+        const avgVol = parseFloat(s.average_volume.replace(/,/g, ''));
+        const relVol = s.volume / avgVol;
+         insights.push({
+            label: "Relative Volume",
+            value: `${relVol.toFixed(2)}x vs Avg`,
+            status: relVol > 1.2 ? "positive" : "neutral"
+        });
+    }
 
     return insights;
 }
 
-function AnalyticsSection({ quote }: { quote: any }) {
-    if (!quote) return null;
+function AnalyticsSection({ stock }: { stock: any }) {
+    if (!stock) return null;
 
-    const fundamentals = getFundamentalInsights(quote);
-    const technicals = getTechnicalInsights(quote);
+    const fundamentals = getFundamentalInsights(stock);
+    const technicals = getTechnicalInsights(stock);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm relative overflow-hidden">
@@ -482,12 +484,12 @@ function AnalyticsSection({ quote }: { quote: any }) {
                     {fundamentals.map((item, i) => (
                         <li key={i} className="flex flex-col gap-0.5">
                             <span className="text-xs font-medium text-[var(--text-secondary)]">{item.label}</span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 justify-between">
+                                <span className="text-sm font-semibold text-[var(--text)]">{item.value}</span>
                                 <span className={cn(
-                                    "w-1.5 h-1.5 rounded-full shrink-0",
+                                    "w-2 h-2 rounded-full shrink-0",
                                     item.status === "positive" ? "bg-[var(--profit)]" : item.status === "negative" ? "bg-[var(--loss)]" : "bg-gray-400"
                                 )} />
-                                <span className="text-sm font-semibold text-[var(--text)]">{item.value}</span>
                             </div>
                         </li>
                     ))}
@@ -504,86 +506,18 @@ function AnalyticsSection({ quote }: { quote: any }) {
                     {technicals.map((item, i) => (
                         <li key={i} className="flex flex-col gap-0.5">
                             <span className="text-xs font-medium text-[var(--text-secondary)]">{item.label}</span>
-                            <div className="flex items-center gap-2">
+                             <div className="flex items-center gap-2 justify-between">
+                                <span className="text-sm font-semibold text-[var(--text)]">{item.value}</span>
                                 <span className={cn(
-                                    "w-1.5 h-1.5 rounded-full shrink-0",
+                                    "w-2 h-2 rounded-full shrink-0",
                                     item.status === "positive" ? "bg-[var(--profit)]" : item.status === "negative" ? "bg-[var(--loss)]" : "bg-gray-400"
                                 )} />
-                                <span className="text-sm font-semibold text-[var(--text)]">{item.value}</span>
                             </div>
                         </li>
                     ))}
                 </ul>
             </div>
 
-        </div>
-    );
-}
-
-function AnalystRatingGauge({ recommendation }: { recommendation: any }) {
-    if (!recommendation) return null;
-    
-    // { "period": "0m", "strongBuy": 5, "buy": 24, "hold": 15, "sell": 1, "strongSell": 3 }
-    const { strongBuy, buy, hold, sell, strongSell } = recommendation;
-    const total = strongBuy + buy + hold + sell + strongSell;
-    
-    if (total === 0) return null;
-
-    // Calculate a score from 1 (Strong Sell) to 5 (Strong Buy)
-    // Strong Sell = 1, Sell = 2, Hold = 3, Buy = 4, Strong Buy = 5
-    const score = (
-        (strongSell * 1) + (sell * 2) + (hold * 3) + (buy * 4) + (strongBuy * 5)
-    ) / total;
-    
-    // Rotation mapping: 1 -> 0deg, 5 -> 180deg
-    // 1-5 range maps to 0-180
-    // (score - 1) / 4 * 180
-    const rotation = ((score - 1) / 4) * 180;
-
-    let ratingText = "Neutral";
-    let colorClass = "text-yellow-500";
-    if (score >= 4.5) { ratingText = "Strong Buy"; colorClass = "text-[var(--profit)]"; }
-    else if (score >= 3.5) { ratingText = "Buy"; colorClass = "text-green-400"; }
-    else if (score >= 2.5) { ratingText = "Hold"; colorClass = "text-yellow-500"; }
-    else if (score >= 1.5) { ratingText = "Sell"; colorClass = "text-red-400"; }
-    else { ratingText = "Strong Sell"; colorClass = "text-[var(--loss)]"; }
-
-    return (
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-             <div className="flex items-center gap-2 text-[var(--text-secondary)] mb-6 border-b border-[var(--border)] pb-2">
-                <AlertCircle className="w-4 h-4" />
-                <h3 className="text-lg font-semibold text-[var(--text)]">Analyst Rating</h3>
-            </div>
-            
-            <div className="flex flex-col items-center relative">
-                <div className="relative w-48 h-24 overflow-hidden">
-                    {/* Gauge Arc Background */}
-                    <div className="absolute top-0 left-0 w-full h-48 bg-gray-700/30 rounded-full border-8 border-gray-600/30 box-border -z-10"></div>
-                     
-                     {/* Colored Arc - We can simulate gradients with a background image or simpler css */}
-                     <div className="absolute top-0 left-0 w-full h-48 rounded-full border-8 border-transparent border-t-green-500/80 border-l-yellow-500/80 border-r-red-500/80 blur-lg opacity-50"></div>
-                     
-                    {/* Needle */}
-                    <div 
-                        className="absolute bottom-0 left-1/2 w-1 h-24 bg-white origin-bottom transition-transform duration-1000 ease-out z-10"
-                        style={{ transform: `translateX(-50%) rotate(${rotation - 90}deg)` }}
-                    >
-                        <div className="w-2 h-2 bg-white rounded-full absolute bottom-[-4px] left-[-2px]" />
-                    </div>
-                </div>
-                
-                <div className="mt-4 text-center">
-                    <div className={cn("text-2xl font-bold", colorClass)}>{ratingText}</div>
-                    <div className="text-xs text-[var(--text-secondary)] mt-1">Based on {total} analysts</div>
-                </div>
-                
-                {/* Legend */}
-                <div className="w-full flex justify-between text-[10px] text-[var(--text-secondary)] mt-4 px-4 uppercase font-bold tracking-wider">
-                    <span>Sell</span>
-                    <span>Hold</span>
-                    <span>Buy</span>
-                </div>
-            </div>
         </div>
     );
 }
