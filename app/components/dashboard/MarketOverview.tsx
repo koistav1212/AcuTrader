@@ -10,10 +10,13 @@ interface MarketStock {
   price: number;
   changesPercentage: number;
   change: number;
+  volume: number;
+  marketCap: number;
+  fiftyTwoWeekChangePercent: number;
 }
 
 interface StockWithHistory extends MarketStock {
-  history: { date: string; value: number }[];
+  // history removed as it's no longer used in StockCard
 }
 
 export default function MarketOverview() {
@@ -41,7 +44,9 @@ export default function MarketOverview() {
             price: stock.price,
             change: stock.change,
             changesPercentage: stock.changesPercentage,
-            history: stock.chartData || [] // Use the provided chartData directly
+            volume: stock.volume,
+            marketCap: stock.marketCap,
+            fiftyTwoWeekChangePercent: stock.fiftyTwoWeekChangePercent,
           }));
         };
 
@@ -77,7 +82,18 @@ export default function MarketOverview() {
                 {loading ? (
                     // Loading skeletons
                     Array.from({ length: 4 }).map((_, i) => (
-                        <StockCard key={i} symbol="" name="" price={0} change={0} changePercent={0} data={[]} isLoading={true} />
+                        <StockCard 
+                          key={i} 
+                          symbol="" 
+                          name="" 
+                          price={0} 
+                          change={0} 
+                          changePercent={0} 
+                          volume={0}
+                          marketCap={0}
+                          fiftyTwoWeekChangePercent={0}
+                          isLoading={true} 
+                        />
                     ))
                 ) : (
                     gainers.map((stock) => (
@@ -88,7 +104,9 @@ export default function MarketOverview() {
                             price={stock.price}
                             change={stock.change}
                             changePercent={stock.changesPercentage}
-                            data={stock.history}
+                            volume={stock.volume}
+                            marketCap={stock.marketCap}
+                            fiftyTwoWeekChangePercent={stock.fiftyTwoWeekChangePercent}
                         />
                     ))
                 )}
@@ -113,7 +131,18 @@ export default function MarketOverview() {
                 {loading ? (
                     // Loading skeletons
                      Array.from({ length: 4 }).map((_, i) => (
-                        <StockCard key={i} symbol="" name="" price={0} change={0} changePercent={0} data={[]} isLoading={true} />
+                        <StockCard 
+                          key={i} 
+                          symbol="" 
+                          name="" 
+                          price={0} 
+                          change={0} 
+                          changePercent={0} 
+                          volume={0}
+                          marketCap={0}
+                          fiftyTwoWeekChangePercent={0}
+                          isLoading={true} 
+                        />
                     ))
                 ) : (
                     losers.map((stock) => (
@@ -124,7 +153,9 @@ export default function MarketOverview() {
                             price={stock.price}
                             change={stock.change}
                             changePercent={stock.changesPercentage}
-                            data={stock.history}
+                            volume={stock.volume}
+                            marketCap={stock.marketCap}
+                            fiftyTwoWeekChangePercent={stock.fiftyTwoWeekChangePercent}
                         />
                     ))
                 )}
