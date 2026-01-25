@@ -83,24 +83,47 @@ export default function DashboardSection() {
 
   // --- CALCULATIONS ---
 
-  let totalPortfolioValue = 0;
-  let totalDailyPL = 0;
+  // REPLACE: Local Math -> Backend Data
+  const [summary, setSummary] = useState<any>(null);
+  
+  useEffect(() => {
+     async function fetchSummary() {
+         try {
+             // We can import getPortfolioSummary from the service we created
+             const { getPortfolioSummary } = await import('@/app/services/portfolioService');
+             const data = await getPortfolioSummary();
+             setSummary(data);
+         } catch (e) {
+             console.error("Dashboard summary fetch failed", e);
+         }
+     }
+     fetchSummary();
+  }, []);
+
+  // While loading or if failed, we might show dashes or 0
+  
+  // Use backend data if available, else fallback (or 0)
+  const totalAccountValue = summary ? summary.equity : 0;
+  const availableCash = summary ? summary.balance : 0;
+  const totalDailyPL = summary ? summary.dayPnl : 0;
+  const dailyPLPercent = summary && summary.equity ? (summary.dayPnl / (summary.equity - summary.dayPnl)) * 100 : 0;
+  const isPositiveDay = totalDailyPL >= 0;
+
+  // OLD LOGIC (ALLOCATION) - Keep this for the Pie Chart for now as backend 'summary' might not give allocation
+  // But we need to ensure 'value' matches equity. 
+  // Actually, allocation is derived from 'holdings' which we have from context.
+  // So we can keep allocation logic mostly as is, just ensuring it sums up correctly.
+  
   let allocationData: { name: string; value: number }[] = [];
   let movers: { symbol: string; change: number; price: number }[] = [];
-
+  
+  // Recalculate allocation locally for the CHART only
   holdings.forEach(h => {
      const quote = quotes[h.symbol] || {};
      const price = quote.regularMarketPrice || quote.current_price || h.avgCost || 0;
-    //  Prioritize percent_change
      const changePercent = quote.percent_change || quote.regularMarketChangePercent || 0;
-     const changeAmount = (price * changePercent) / 100; // approx daily change per share
-     
      const value = h.quantity * price;
-     const pl = h.quantity * changeAmount;
-
-     totalPortfolioValue += value;
-     totalDailyPL += pl;
-
+     
      allocationData.push({ name: h.symbol, value });
      movers.push({ symbol: h.symbol, change: changePercent, price });
   });
@@ -118,13 +141,6 @@ export default function DashboardSection() {
   const topGainers = movers.filter(m => m.change > 0).slice(0, 3);
   const topLosers = [...movers].filter(m => m.change < 0).reverse().slice(0, 3);
 
-  // Totals
-  const totalInvested = holdings.reduce((acc, h) => acc + (h.quantity * h.avgCost), 0);
-  const availableCash = STARTING_BALANCE - totalInvested; // Simplified cash logic from sim-data
-  const totalAccountValue = totalPortfolioValue + availableCash;
-
-  const dailyPLPercent = totalPortfolioValue > 0 ? (totalDailyPL / totalPortfolioValue) * 100 : 0;
-  const isPositiveDay = totalDailyPL >= 0;
 
   return (
     <section className="space-y-6">

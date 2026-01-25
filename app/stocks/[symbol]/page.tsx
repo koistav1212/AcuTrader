@@ -50,6 +50,7 @@ export default function StockDetail() {
 
         if (stockItem) {
             setStockData(stockItem);
+            console.log("STOCK_DATA--------",stockItem)
             // Optionally cache this rich data
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem(`stock_data_${symbol}`, JSON.stringify(stockItem));
@@ -113,7 +114,20 @@ export default function StockDetail() {
   };
   
   const s = stockData; // Short alias
-  const currentPrice = parseNum(s.current_price || s.price || 0);
+  const safeMid = (bid: any, ask: any) => {
+    const b = parseNum(bid);
+    const a = parseNum(ask);
+    return (b && a) ? (b + a) / 2 : null;
+  };
+
+  const rawPrice =
+    s.last_price ??
+    safeMid(s.bid, s.ask) ??
+    s.current_price ??
+    s.price ??
+    s.previous_close;
+
+  const currentPrice = parseNum(rawPrice > 0 ? rawPrice : 0);
   const change = parseNum(s.change || 0);
   const percentChange = parseNum(s.percent_change || 0);
   const isUp = s.is_up !== undefined ? s.is_up : change >= 0;
