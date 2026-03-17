@@ -4,57 +4,48 @@ import React, { useEffect, useState } from "react";
 import { StockCard } from "./StockCard";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
+
 interface MarketStock {
   symbol: string;
-  name?: string;
   price: number;
-  changesPercentage: number;
   change: number;
+  changesPercentage: number;
   volume: number;
-  marketCap: number;
-  fiftyTwoWeekChangePercent: number;
-}
-
-interface StockWithHistory extends MarketStock {
-  // history removed as it's no longer used in StockCard
+  marketCap?: number;
 }
 
 export default function MarketOverview() {
-  const [gainers, setGainers] = useState<StockWithHistory[]>([]);
-  const [losers, setLosers] = useState<StockWithHistory[]>([]);
+  const [gainers, setGainers] = useState<MarketStock[]>([]);
+  const [losers, setLosers] = useState<MarketStock[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        // Fetch Top Gainers and Losers in parallel
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-        const [gainersRes, losersRes] = await Promise.all([
-          fetch(`${baseUrl}/market/top-gainers`).then(r => r.json()),
-          fetch(`${baseUrl}/market/top-losers`).then(r => r.json())
-        ]);
 
-        // Helper to process stocks
-        const processStocks = (stocks: any[]) => {
-          // Limit to top 10
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+        const res = await fetch(`${baseUrl}/market/top-movers`);
+        const data = await res.json();
+
+        const mapStocks = (stocks: any[]) => {
           return stocks.slice(0, 10).map((stock) => ({
-            symbol: stock.symbol,
-            name: stock.name || stock.companyName || stock.symbol,
-            price: stock.price,
-            change: stock.change,
-            changesPercentage: stock.changesPercentage,
-            volume: stock.volume,
-            marketCap: stock.marketCap,
-            fiftyTwoWeekChangePercent: stock.fiftyTwoWeekChangePercent,
+            symbol: stock.ticker,
+            price: Number(stock.price),
+            change: Number(stock.change_amount),
+            changesPercentage: parseFloat(
+              stock.change.replace("%", "")
+            ),
+            volume: Number(stock.volume),
+            marketCap: 0
           }));
         };
 
-        setGainers(processStocks(gainersRes));
-        setLosers(processStocks(losersRes));
+        setGainers(mapStocks(data.gainers || []));
+        setLosers(mapStocks(data.losers || []));
       } catch (error) {
-        console.error("Failed to fetch market overview data", error);
-        // Fallback or empty state could be handled here
+        console.error("Failed to fetch market overview", error);
       } finally {
         setLoading(false);
       }
@@ -64,104 +55,54 @@ export default function MarketOverview() {
   }, []);
 
   return (
-    <div className="space-y-8 py-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Top Gainers Section */}
+    <div className="space-y-8 py-6">
+
+      {/* Top Gainers */}
       <section>
-        <div className="flex items-center gap-2 mb-4 px-1">
-            <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
-                <TrendingUp className="w-5 h-5" />
-            </div>
-            <div>
-                 <h2 className="text-xl font-bold text-[var(--text)]">Top Gainers</h2>
-                 <p className="text-xs text-[var(--text-secondary)]">Best performing stocks this month</p>
-            </div>
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp className="text-green-500 w-5 h-5" />
+          <h2 className="text-xl font-bold">Top Gainers</h2>
         </div>
-        
-        <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-            <div className="flex gap-4 min-w-max">
-                {loading ? (
-                    // Loading skeletons
-                    Array.from({ length: 4 }).map((_, i) => (
-                        <StockCard 
-                          key={i} 
-                          symbol="" 
-                          name="" 
-                          price={0} 
-                          change={0} 
-                          changePercent={0} 
-                          volume={0}
-                          marketCap={0}
-                          fiftyTwoWeekChangePercent={0}
-                          isLoading={true} 
-                        />
-                    ))
-                ) : (
-                    gainers.map((stock) => (
-                        <StockCard
-                            key={stock.symbol}
-                            symbol={stock.symbol}
-                            name={stock.name || stock.symbol}
-                            price={stock.price}
-                            change={stock.change}
-                            changePercent={stock.changesPercentage}
-                            volume={stock.volume}
-                            marketCap={stock.marketCap}
-                            fiftyTwoWeekChangePercent={stock.fiftyTwoWeekChangePercent}
-                        />
-                    ))
-                )}
-            </div>
+
+        <div className="flex gap-4 overflow-x-auto">
+
+          {gainers.map((stock) => (
+                <StockCard
+                  key={stock.symbol}
+                  symbol={stock.symbol}
+                  name={stock.symbol}
+                  price={stock.price}
+                  change={stock.change}
+                  changePercent={stock.changesPercentage}
+                  volume={stock.volume}
+                />
+              ))}
         </div>
       </section>
 
-      {/* Top Losers Section */}
+      {/* Top Losers */}
       <section>
-        <div className="flex items-center gap-2 mb-4 px-1">
-            <div className="p-2 rounded-lg bg-red-500/10 text-red-500">
-                <TrendingDown className="w-5 h-5" />
-            </div>
-            <div>
-                 <h2 className="text-xl font-bold text-[var(--text)]">Top Losers</h2>
-                 <p className="text-xs text-[var(--text-secondary)]">Worst performing stocks this month</p>
-            </div>
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingDown className="text-red-500 w-5 h-5" />
+          <h2 className="text-xl font-bold">Top Losers</h2>
         </div>
-        
-        <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-            <div className="flex gap-4 min-w-max">
-                {loading ? (
-                    // Loading skeletons
-                     Array.from({ length: 4 }).map((_, i) => (
-                        <StockCard 
-                          key={i} 
-                          symbol="" 
-                          name="" 
-                          price={0} 
-                          change={0} 
-                          changePercent={0} 
-                          volume={0}
-                          marketCap={0}
-                          fiftyTwoWeekChangePercent={0}
-                          isLoading={true} 
-                        />
-                    ))
-                ) : (
-                    losers.map((stock) => (
-                        <StockCard
-                            key={stock.symbol}
-                            symbol={stock.symbol}
-                            name={stock.name || stock.symbol}
-                            price={stock.price}
-                            change={stock.change}
-                            changePercent={stock.changesPercentage}
-                            volume={stock.volume}
-                            marketCap={stock.marketCap}
-                            fiftyTwoWeekChangePercent={stock.fiftyTwoWeekChangePercent}
-                        />
-                    ))
-                )}
-            </div>
+
+        <div className="flex gap-4 overflow-x-auto">
+
+          { losers.map((stock) => (
+                <StockCard
+                  key={stock.symbol}
+                  symbol={stock.symbol}
+                  name={stock.symbol}
+                  price={stock.price}
+                  change={stock.change}
+                  changePercent={stock.changesPercentage}
+                  volume={stock.volume}
+                />
+              ))}
         </div>
       </section>
+
     </div>
   );
 }

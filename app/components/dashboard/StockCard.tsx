@@ -12,8 +12,6 @@ interface StockCardProps {
   change: number;
   changePercent: number; // Maps to changesPercentage
   volume: number;
-  marketCap: number;
-  fiftyTwoWeekChangePercent: number;
   isLoading?: boolean;
 }
 
@@ -33,8 +31,6 @@ export const StockCard: React.FC<StockCardProps> = ({
   change,
   changePercent,
   volume,
-  marketCap,
-  fiftyTwoWeekChangePercent,
   isLoading = false,
 }) => {
   const isPositive = change >= 0;
@@ -72,8 +68,6 @@ export const StockCard: React.FC<StockCardProps> = ({
         change: change,
         percent_change: changePercent,
         volume: volume,
-        marketCap: marketCap,
-        fiftyTwoWeekChangePercent: fiftyTwoWeekChangePercent
     };
 
     if (typeof window !== 'undefined') {
@@ -112,16 +106,8 @@ export const StockCard: React.FC<StockCardProps> = ({
             <span className="text-[10px] uppercase text-[var(--text-secondary)] font-semibold">Volume</span>
             <span className="text-sm font-medium text-[var(--text)]">{formatNumber(volume)}</span>
         </div>
-        <div className="flex flex-col">
-            <span className="text-[10px] uppercase text-[var(--text-secondary)] font-semibold">Market Cap</span>
-            <span className="text-sm font-medium text-[var(--text)]">{formatNumber(marketCap)}</span>
-        </div>
-        <div className="flex flex-col col-span-2">
-            <span className="text-[10px] uppercase text-[var(--text-secondary)] font-semibold">52W Change</span>
-            <span className={`text-sm font-medium ${fiftyTwoWeekChangePercent >= 0 ? "text-green-500" : "text-red-500"}`}>
-                {fiftyTwoWeekChangePercent > 0 ? "+" : ""}{fiftyTwoWeekChangePercent.toFixed(2)}%
-            </span>
-        </div>
+     
+       
       </div>
     </Link>
   );
