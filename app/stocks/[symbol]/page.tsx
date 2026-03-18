@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import StockOrderForm from "./_components/StockOrderForm";
+import ForecastChart from "./_components/ForecastChart";
 import { Brain, Activity, TrendingUp, Zap, Scale, BarChart3, AlertCircle, DollarSign, PieChart, Briefcase } from "lucide-react";
 import StockChart from "../../../components/charts/StockChart";
 
@@ -331,6 +332,11 @@ export default function StockDetail() {
             name={s.name} 
             marketState={isUp ? "OPEN" : "CLOSED"} // Approximation or we can fetch state if needed
           />
+
+          {/* 📊 FORECAST CHART */}
+          {s.forecast_3day && (
+            <ForecastChart forecastData={s.forecast_3day} />
+          )}
         </div>
 
       </div>
