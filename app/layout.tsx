@@ -14,16 +14,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en">
-      <body>
+      <body className="font-sans bg-[var(--bg-primary)] text-[var(--text-primary)]">
         <ThemeProvider>
           <UserProvider>
-            <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)]">
+            <div className="min-h-screen flex flex-col">
               
               {/* Contextual Nav/Footer: Hidden on Auth Page */}
               {!isAuthPage && <DesktopNavbar />}
 
               {/* Main content */}
-              <main className={`flex-grow container mx-auto p-4 ${isAuthPage ? 'h-screen p-0 max-w-none' : ''}`}>
+              <main className={`flex-grow container mx-auto${isAuthPage ? 'h-screen p-0 max-w-none overflow-x-hidden' : ''}`}>
                 {children}
               </main>
 

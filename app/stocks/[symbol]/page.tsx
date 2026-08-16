@@ -29,6 +29,8 @@ export default function StockDetail() {
         // This single endpoint now returns all necessary details
         const res = await fetch(`${baseUrl}/market/search?q=${symbol}`);
         const data = await res.json();
+        const res1 = await fetch(`${baseUrl}/market/historical-data?q=${symbol}`);
+        const data1 = await res.json();
         
         let stockItem = null;
 

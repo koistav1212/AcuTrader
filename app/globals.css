@@ -2,86 +2,185 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ------------------------------------------
-   ACUTRADER THEME SYSTEM
------------------------------------------- */
-
-/* 🌞 LIGHT THEME */
 :root {
-  --bg: #F7F9FB;
-  --bg-secondary: #FFFFFF;
-  --card: #FFFFFF;
-
-  --text: #0D1B2A;
-  --text-secondary: #445566;
-
-  --border: #DCE3EA;
-
-  --accent: #00AC86;
-  --accent-hover: #008C6F;
-
-  --profit: #0FA958;
-  --loss: #E7515A;
-
-  --chart-line: #00B38F;
-  --chart-grid: #E5E9EF;
-
-  --logo: #00E0A2;
+  --font-inter: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-playfair: "Iowan Old Style", "Baskerville", Georgia, serif;
+  --bg: #e7e4de;
+  --surface: #f2f0eb;
+  --text: #1d2229;
+  --muted: #777a7e;
+  --border: rgba(29, 34, 41, 0.14);
+  --accent: #5f7896;
 }
 
-/* 🌑 DARK THEME */
-.dark {
-  --bg: #0C111D;
-  --bg-secondary: #131A2B;
-  --card: #131A2B;
-
-  --text: #F3F4F6;
-  --text-secondary: #9AA5B8;
-
-  --border: #1E2638;
-
-  --accent: #00E0A2;
-  --accent-hover: #00C78F;
-
-  --profit: #14FFB0;
-  --loss: #FF6B81;
-
-  --chart-line: #00E0A2;
-  --chart-grid: #243047;
-
-  --logo: #00E0A2;
+/* Shared cinematic set dressing for the AcuTrader narrative. */
+.research-scene {
+  min-height: 100vh;
+  isolation: isolate;
+  background: var(--bg);
 }
 
-/* ------------------------------------------
-   APPLY GLOBAL STYLES
------------------------------------------- */
+.research-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(54, 95, 217, .13), transparent 26%),
+    radial-gradient(circle at 80% 74%, rgba(200, 255, 0, .10), transparent 20%),
+    linear-gradient(110deg, rgba(255,255,255,.48), transparent 42%),
+    repeating-linear-gradient(90deg, transparent 0, transparent calc(10% - 1px), rgba(17,19,24,.045) calc(10% - 1px), rgba(17,19,24,.045) 10%);
+}
+
+.research-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  opacity: .22;
+  background-image: radial-gradient(rgba(17,19,24,.35) .55px, transparent .65px);
+  background-size: 5px 5px;
+  mix-blend-mode: soft-light;
+}
+
+.scene-frame { min-height: 100svh; }
+.protagonist-cutout {
+  filter: drop-shadow(0 34px 30px rgba(50, 43, 32, .22)) contrast(1.04) saturate(.94);
+  opacity: .96;
+}
+.editorial-surface {
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(17,19,24,.11);
+  box-shadow: 0 18px 38px rgba(39,34,27,.10);
+  backdrop-filter: blur(14px);
+}
+.data-card { transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease; }
+.data-card:hover { transform: translateY(-6px); border-color: rgba(54,95,217,.54); box-shadow: 0 22px 40px rgba(33,43,65,.16); }
 
 @layer base {
   body {
     background-color: var(--bg);
     color: var(--text);
-    @apply antialiased transition-colors duration-300;
-  }
-
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent);
-  }
-  ::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
+    @apply antialiased font-sans;
   }
 }
 
-/* Utility */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================
+   LIVE CARD ANIMATIONS
+========================================================= */
+
+.live-bar {
+  animation: liveBar 2.4s ease-in-out infinite alternate;
+  transform-origin: bottom;
+}
+
+.live-bar:nth-child(1) { animation-duration: 1.8s; }
+.live-bar:nth-child(2) { animation-duration: 2.3s; }
+.live-bar:nth-child(3) { animation-duration: 1.5s; }
+.live-bar:nth-child(4) { animation-duration: 2.7s; }
+.live-bar:nth-child(5) { animation-duration: 2.1s; }
+.live-bar:nth-child(6) { animation-duration: 1.7s; }
+.live-bar:nth-child(7) { animation-duration: 2.5s; }
+.live-bar:nth-child(8) { animation-duration: 1.9s; }
+
+@keyframes liveBar {
+  0% {
+    height: 20%;
+    opacity: 0.5;
+  }
+  50% {
+    height: 95%;
+    opacity: 1;
+  }
+  100% {
+    height: 45%;
+    opacity: 0.7;
+  }
+}
+
+.live-line {
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  animation: drawLine 3s ease-in-out infinite alternate;
+}
+
+@keyframes drawLine {
+  from {
+    stroke-dashoffset: 500;
+    opacity: 0.55;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.live-line-pulse {
+  stroke-dasharray: 8 16;
+  animation: lineFlow 1.5s linear infinite;
+}
+
+@keyframes lineFlow {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+.live-progress {
+  animation: progressPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes progressPulse {
+  0% {
+    filter: brightness(0.9);
+    opacity: 0.75;
+  }
+  100% {
+    filter: brightness(1.2);
+    opacity: 1;
+    box-shadow: 0 0 16px currentColor;
+  }
+}
+
+/* =========================================================
+   TYPOGRAPHY HIERARCHY
+========================================================= */
+
+@layer utilities {
+  /* Desktop minimum */
+  .small-label {
+    @apply text-[12px];
+  }
+
+  /* Standard supporting text */
+  .body-small {
+    @apply text-[14px];
+  }
+
+  /* Card title */
+  .card-title {
+    @apply text-[14px] font-bold;
+  }
+
+  /* Main card data */
+  .card-value {
+    @apply text-[22px] font-bold;
   }
 }
