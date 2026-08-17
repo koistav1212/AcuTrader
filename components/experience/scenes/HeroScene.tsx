@@ -190,27 +190,8 @@ export function HeroScene() {
 
       /* =========================================================
          SCROLL EXIT
-
-         Whole signal field fades upward.
+         Removed by user request to keep badges visible 
       ========================================================= */
-
-      badges.forEach((badge, index) => {
-        gsap.to(badge, {
-          opacity: 0,
-          y: -100 - (index % 4) * 20,
-          scale: 0.8,
-          filter: "blur(6px)",
-
-          ease: "none",
-
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "70% top",
-            end: "bottom top",
-            scrub: 1,
-          },
-        });
-      });
 
       return () => {
         container?.removeEventListener(

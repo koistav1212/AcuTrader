@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "../../lib/constants/nav";
 import { cn } from "../../lib/utils";
@@ -36,7 +37,7 @@ export function DesktopNavbar() {
 
         {/* BRAND / LOGO */}
         <Link href="/" className="flex items-center space-x-2">
-          <img src="../../icon.png" alt="" className="h-8 w-8 flex items-center justify-center rounded-lg bg-transparent text-white font-bold"/>
+          <Image src="/icon.png" alt="AcuTrader Logo" width={32} height={32} className="h-8 w-8 flex items-center justify-center rounded-lg bg-transparent text-white font-bold"/>
           
           <span className="hidden sm:inline-block font-semibold text-lg tracking-tight text-[var(--text)]">
             AcuTrader
