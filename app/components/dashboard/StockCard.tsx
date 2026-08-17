@@ -34,7 +34,7 @@ export const StockCard: React.FC<StockCardProps> = ({
   isLoading = false,
 }) => {
   const isPositive = change >= 0;
-  const color = isPositive ? "#22c55e" : "#ef4444"; // green-500 : red-500
+  const color = isPositive ? "var(--positive)" : "var(--negative)";
 
   if (isLoading) {
     return (
@@ -89,12 +89,12 @@ export const StockCard: React.FC<StockCardProps> = ({
       
       <div className="flex justify-between items-start z-10">
         <div>
-          <h3 className="font-bold text-lg text-[var(--text)]">{symbol}</h3>
-          <p className="text-xs text-[var(--text-secondary)] truncate max-w-[140px]">{name}</p>
+          <h3 className="font-sans font-semibold text-[16px] text-[var(--text-primary)]">{symbol}</h3>
+          <p className="text-[13px] text-[var(--text-secondary)] truncate max-w-[140px]">{name}</p>
         </div>
         <div className="text-right">
-          <p className="font-bold text-[var(--text)] text-lg">${price.toFixed(2)}</p>
-          <div className={`flex items-center justify-end gap-1 text-sm font-semibold ${isPositive ? "text-green-500" : "text-red-500"}`}>
+          <p className="font-mono font-bold text-[var(--text-primary)] text-[16px]">${price.toFixed(2)}</p>
+          <div className={`flex items-center justify-end gap-1 font-mono text-[14px] font-semibold ${isPositive ? "text-[var(--positive)]" : "text-[var(--negative)]"}`}>
             {isPositive ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
             <span>{Math.abs(changePercent).toFixed(2)}%</span>
           </div>
@@ -103,8 +103,8 @@ export const StockCard: React.FC<StockCardProps> = ({
 
       <div className="mt-4 grid grid-cols-2 gap-y-2 gap-x-4 z-10">
         <div className="flex flex-col">
-            <span className="text-[10px] uppercase text-[var(--text-secondary)] font-semibold">Volume</span>
-            <span className="text-sm font-medium text-[var(--text)]">{formatNumber(volume)}</span>
+            <span className="metadata-label text-[var(--text-secondary)]">Volume</span>
+            <span className="font-mono text-[14px] font-medium text-[var(--text-primary)]">{formatNumber(volume)}</span>
         </div>
      
        

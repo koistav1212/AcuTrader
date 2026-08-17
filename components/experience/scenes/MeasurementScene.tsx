@@ -90,7 +90,7 @@ function MeasureCard({
         border
         px-6
         py-5
-        backdrop-blur-xl
+        
         transition-shadow
         duration-500
       "
@@ -605,67 +605,22 @@ export function MeasurementScene() {
         </div>
 
         {/* ====================================================
-            TOP RIGHT — VOLATILITY
+            RIGHT UPPER — VOLATILITY + ATR
         ===================================================== */}
 
         <div
           className="
             absolute
-            right-[17%]
-            top-[15%]
-            z-20
-            rotate-[-5deg]
-          "
-        >
-          <MeasureCard
-            tone="orange"
-            depth="back"
-          >
-            <p
-              className="
-                font-mono
-                text-[12px]
-                font-bold
-                uppercase
-                tracking-[0.15em]
-              "
-              style={{
-                color: colorStyles.orange.text,
-              }}
-            >
-              VOLATILITY INDEX
-            </p>
-
-            <LiveLine color="orange" />
-
-            <p className="mt-2 text-[26px] font-bold text-white">
-              <span
-                className="animated-number"
-                data-value="14.2"
-                data-decimals="1"
-              >
-                0.0
-              </span>
-            </p>
-          </MeasureCard>
-        </div>
-
-        {/* ====================================================
-            CENTER RIGHT — ATR
-        ===================================================== */}
-
-        <div
-          className="
-            absolute
-            right-[20%]
-            top-[40%]
+            right-[12%]
+            top-[20%]
             z-30
-            rotate-[2deg]
+            rotate-[-3deg]
           "
         >
           <MeasureCard
             tone="orange"
             depth="primary"
+            className="w-[280px]"
           >
             <p
               className="
@@ -679,46 +634,57 @@ export function MeasurementScene() {
                 color: colorStyles.orange.text,
               }}
             >
-              ATR (14D)
+              VOLATILITY & ATR
             </p>
 
-            <p className="mt-5 text-[26px] font-bold text-white">
-              <span
-                className="animated-number"
-                data-value="3.85"
-                data-decimals="2"
-              >
-                0.00
-              </span>
-            </p>
+            <div className="flex justify-between mt-5">
+              <div>
+                <p className="text-[26px] font-bold text-white">
+                  <span
+                    className="animated-number"
+                    data-value="14.2"
+                    data-decimals="1"
+                  >
+                    0.0
+                  </span>
+                </p>
+                <p className="mt-1 text-[12px] text-slate-300">Index</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[26px] font-bold text-white">
+                  <span
+                    className="animated-number"
+                    data-value="3.85"
+                    data-decimals="2"
+                  >
+                    0.00
+                  </span>
+                </p>
+                <p className="mt-1 text-[12px] text-slate-300">ATR (14D)</p>
+              </div>
+            </div>
 
-            <p className="mt-1 text-[14px] text-slate-300">
-              Active volatility
-            </p>
-
-            <LiveProgress
-              color="orange"
-              value={62}
-            />
+            <LiveProgress color="orange" value={62} />
           </MeasureCard>
         </div>
 
         {/* ====================================================
-            FAR RIGHT — BOLLINGER
+            RIGHT LOWER — BOLLINGER + RELATIVE VOLUME
         ===================================================== */}
 
         <div
           className="
             absolute
-            right-[4%]
-            top-[29%]
+            right-[15%]
+            bottom-[15%]
             z-20
-            rotate-[-5deg]
+            rotate-[2deg]
           "
         >
           <MeasureCard
             tone="red"
-            depth="forward"
+            depth="back"
+            className="w-[280px]"
           >
             <p
               className="
@@ -732,78 +698,38 @@ export function MeasurementScene() {
                 color: colorStyles.red.text,
               }}
             >
-              BOLLINGER %B
+              BOLLINGER & VOLUME
             </p>
 
-            <p className="mt-5 text-[26px] font-bold text-white">
-              <span
-                className="animated-number"
-                data-value="0.82"
-                data-decimals="2"
-              >
-                0.00
-              </span>
-            </p>
-
-            <p className="mt-1 text-[14px] text-slate-300">
-              Near upper band
-            </p>
+            <div className="flex justify-between mt-5">
+              <div>
+                <p className="text-[26px] font-bold text-white">
+                  <span
+                    className="animated-number"
+                    data-value="0.82"
+                    data-decimals="2"
+                  >
+                    0.00
+                  </span>
+                </p>
+                <p className="mt-1 text-[12px] text-slate-300">%B</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[26px] font-bold text-white">
+                  <span
+                    className="animated-number"
+                    data-value="1.8"
+                    data-suffix="x"
+                    data-decimals="1"
+                  >
+                    0.0x
+                  </span>
+                </p>
+                <p className="mt-1 text-[12px] text-slate-300">Rel Vol</p>
+              </div>
+            </div>
 
             <LiveLine color="red" />
-          </MeasureCard>
-        </div>
-
-        {/* ====================================================
-            BOTTOM RIGHT — RELATIVE VOLUME
-        ===================================================== */}
-
-        <div
-          className="
-            absolute
-            bottom-[14%]
-            right-[10%]
-            z-20
-            rotate-[3deg]
-          "
-        >
-          <MeasureCard
-            tone="green"
-            depth="deepest"
-          >
-            <p
-              className="
-                font-mono
-                text-[12px]
-                font-bold
-                uppercase
-                tracking-[0.15em]
-              "
-              style={{
-                color: colorStyles.green.text,
-              }}
-            >
-              RELATIVE VOLUME
-            </p>
-
-            <p className="mt-4 text-[26px] font-bold text-white">
-              <span
-                className="animated-number"
-                data-value="1.8"
-                data-suffix="x"
-                data-decimals="1"
-              >
-                0.0x
-              </span>
-            </p>
-
-            <p className="mt-1 text-[14px] text-slate-300">
-              vs. 30-day average
-            </p>
-
-            <LiveBars
-              color="green"
-              bars={7}
-            />
           </MeasureCard>
         </div>
       </div>

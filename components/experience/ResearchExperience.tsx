@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { VerticalNav } from "./components/VerticalNav";
 import { ResearchProgress } from "./components/ResearchProgress";
+import { OpenPlatformButton } from "@/components/auth/OpenPlatformButton";
 
 import { HeroScene } from "./scenes/HeroScene";
 import { SignalScene } from "./scenes/SignalScene";
@@ -54,7 +55,7 @@ export function ResearchExperience() {
       <nav className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-8 py-6 mix-blend-difference text-surface pointer-events-none">
         <div className="font-serif text-xl tracking-wide flex flex-col pointer-events-auto cursor-pointer">
           <span className="font-bold">ACUTRADER</span>
-          <span className="text-[8px] font-sans tracking-widest uppercase opacity-70">AI Market Intelligence</span>
+          <span className="text-[10px] font-sans tracking-widest uppercase opacity-70">AI Market Intelligence</span>
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-[10px] font-mono tracking-widest pointer-events-auto">
@@ -66,9 +67,7 @@ export function ResearchExperience() {
         </div>
 
         <div className="pointer-events-auto">
-          <button className="px-6 py-2.5 rounded text-xs font-mono tracking-wider font-semibold bg-surface text-text hover:bg-accent hover:text-surface transition-colors duration-300">
-            OPEN PLATFORM →
-          </button>
+          <OpenPlatformButton />
         </div>
       </nav>
 

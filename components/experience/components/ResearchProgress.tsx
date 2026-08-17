@@ -27,7 +27,7 @@ export function ResearchProgress({ currentSection, total = 7 }: ResearchProgress
 
   return (
     <div className="fixed bottom-8 right-8 z-40 flex flex-col items-end gap-2 pointer-events-none mix-blend-difference text-surface">
-      <span className="font-mono text-[9px] tracking-[0.25em] uppercase opacity-80">
+      <span className="font-mono text-[10px] tracking-[0.25em] uppercase opacity-80">
         {label}
       </span>
       <span className="font-serif text-2xl tabular-nums">

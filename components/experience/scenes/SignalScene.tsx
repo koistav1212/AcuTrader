@@ -178,7 +178,7 @@ function DataCard({
 
   return (
     <div
-      className="data-card relative overflow-hidden rounded-[20px] border bg-white/92 p-6 backdrop-blur-xl"
+      className="data-card relative overflow-hidden rounded-[20px] border bg-white/92 p-6 "
       style={{
         borderColor: `${style.accent}45`,
         boxShadow: `0 14px 40px rgba(0,0,0,0.10),
@@ -453,7 +453,7 @@ export function SignalScene() {
 
         <div className="ai-core absolute left-1/2 top-[46%] z-30 w-[230px] -translate-x-1/2 -translate-y-1/2">
 
-          <div className="rounded-[28px] border border-purple-300 bg-white/90 p-7 text-center shadow-[0_20px_60px_rgba(124,58,237,0.15)] backdrop-blur-xl">
+          <div className="rounded-[28px] border border-purple-300 bg-white/90 p-7 text-center shadow-[0_20px_60px_rgba(124,58,237,0.15)] ">
 
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-purple-100 text-purple-600 shadow-lg text-2xl">
               ◉

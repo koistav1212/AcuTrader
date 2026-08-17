@@ -425,7 +425,7 @@ function Badge({
             />
           )}
           <span
-            className="font-mono text-[9px] font-bold uppercase tracking-[0.16em]"
+            className="font-mono text-[10px] font-bold uppercase tracking-[0.16em]"
             style={{ color: theme.secondary }}
           >
             {text}

@@ -347,11 +347,11 @@ export function SynthesisScene() {
         ====================================================== */}
 
         <div className="absolute left-[4%] bottom-[6%] z-[5] max-w-[240px]">
-          <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-slate-400">
+          <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-slate-400">
             MULTI-SOURCE SYNTHESIS
           </p>
 
-          <p className="mt-3 font-mono text-[10px] leading-relaxed text-slate-500">
+          <p className="mt-3 font-mono text-[10px] leading-relaxed text-[var(--text-secondary)] font-medium">
             Technical momentum, volatility,
             price structure and participation
             are evaluated simultaneously.
@@ -479,14 +479,14 @@ export function SynthesisScene() {
               inset-0
               rounded-full
               bg-black/45
-              backdrop-blur-xl
+              
             "
           />
 
           {/* Inner content */}
 
           <div className="relative z-10 text-center">
-            <p className="font-mono text-[8px] uppercase tracking-[0.28em] text-slate-400">
+            <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-slate-400">
               SYNTHESIS
             </p>
 
@@ -496,7 +496,7 @@ export function SynthesisScene() {
 
             <div className="mx-auto mt-3 h-px w-[54px] bg-white/20" />
 
-            <p className="mt-3 font-mono text-[9px] tracking-[0.18em] text-slate-400">
+            <p className="mt-3 font-mono text-[10px] tracking-[0.18em] text-slate-400">
               AAPL · 84%
             </p>
           </div>
@@ -534,7 +534,7 @@ export function SynthesisScene() {
         >
           <div className="mx-auto h-px w-[55px] bg-white/20" />
 
-          <p className="mt-4 font-mono text-[9px] uppercase tracking-[0.28em] text-slate-500">
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.28em] text-[var(--text-secondary)] font-medium">
             CONSOLIDATED THESIS
           </p>
 
@@ -544,7 +544,7 @@ export function SynthesisScene() {
             bullish market read.
           </p>
 
-          <p className="mt-3 font-mono text-[9px] leading-relaxed text-slate-500">
+          <p className="mt-3 font-mono text-[10px] leading-relaxed text-[var(--text-secondary)] font-medium">
             6 independent measurements ·
             confidence adjusted ·
             risk weighted
@@ -650,7 +650,7 @@ function SignalCard({
         border
         px-5
         py-4
-        backdrop-blur-xl
+        
       "
       data-depth={depth}
       style={{
@@ -684,7 +684,7 @@ function SignalCard({
       />
 
       <p
-        className="font-mono text-[8px] uppercase tracking-[0.28em]"
+        className="font-mono text-[10px] uppercase tracking-[0.28em]"
         style={{
           color: style.color,
         }}
@@ -710,7 +710,7 @@ function SignalCard({
         />
       </div>
 
-      <p className="mt-3 border-t border-white/[0.08] pt-3 font-mono text-[9px] leading-relaxed text-white/40">
+      <p className="mt-3 border-t border-white/[0.08] pt-3 font-mono text-[10px] leading-relaxed text-white/40">
         {context}
       </p>
     </div>

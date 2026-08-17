@@ -24,7 +24,7 @@ export function VerticalNav({ currentSection }: { currentSection: number }) {
   return (
     <nav
       aria-label="Research sections"
-      className="fixed left-8 top-1/2 z-50 hidden -translate-y-1/2 font-mono text-[9px] tracking-widest md:block"
+      className="fixed left-8 top-1/2 z-50 hidden -translate-y-1/2 font-mono text-[10px] tracking-widest md:block"
     >
       <ol className="flex flex-col gap-4">
       {NAV_ITEMS.map((item, idx) => {

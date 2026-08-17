@@ -242,7 +242,7 @@ export function CorrelationScene() {
           className="pointer-events-none absolute inset-0 opacity-[0.3]"
         >
           <div className="absolute left-[6%] top-[18%]">
-            <p className="font-mono text-[12px] tracking-[0.2em] text-slate-500">
+            <p className="font-mono text-[12px] tracking-[0.2em] text-[var(--text-secondary)] font-medium">
               MULTIVARIATE SIGNAL NETWORK
             </p>
 
@@ -253,20 +253,20 @@ export function CorrelationScene() {
           </div>
 
           <div className="absolute right-[6%] bottom-[12%] text-right">
-            <p className="font-mono text-[12px] tracking-[0.18em] text-slate-500">
+            <p className="font-mono text-[12px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">
               LOOKBACK: 90 DAYS
             </p>
 
-            <p className="mt-2 font-mono text-[12px] tracking-[0.18em] text-slate-500">
+            <p className="mt-2 font-mono text-[12px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">
               REFRESH: 15 MINUTES
             </p>
           </div>
 
-          <span className="absolute left-[42%] top-[14%] font-mono text-[12px] tracking-[0.2em] text-slate-500">
+          <span className="absolute left-[42%] top-[14%] font-mono text-[12px] tracking-[0.2em] text-[var(--text-secondary)] font-medium">
             CORRELATION MATRIX / LIVE
           </span>
 
-          <span className="absolute right-[20%] top-[20%] font-mono text-[12px] tracking-[0.18em] text-slate-500">
+          <span className="absolute right-[20%] top-[20%] font-mono text-[12px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">
             CONFIDENCE &gt; 0.80
           </span>
         </DepthLayer>
@@ -284,13 +284,14 @@ export function CorrelationScene() {
             h-full
             w-full
           "
+          viewBox="0 0 1000 1000"
           preserveAspectRatio="none"
         >
           {/* CPI → TARGET */}
 
           <path
             className="correlation-path"
-            d="M 20% 68% C 32% 63%, 38% 59%, 50% 57%"
+            d="M 200 680 C 320 630, 380 590, 500 570"
             fill="none"
             stroke="rgba(96,165,250,0.55)"
             strokeWidth="1.2"
@@ -300,7 +301,7 @@ export function CorrelationScene() {
 
           <path
             className="correlation-path"
-            d="M 31% 39% C 38% 42%, 43% 49%, 50% 57%"
+            d="M 310 390 C 380 420, 430 490, 500 570"
             fill="none"
             stroke="rgba(167,139,250,0.5)"
             strokeWidth="1.2"
@@ -311,7 +312,7 @@ export function CorrelationScene() {
 
           <path
             className="correlation-path"
-            d="M 50% 57% C 57% 46%, 61% 34%, 69% 29%"
+            d="M 500 570 C 570 460, 610 340, 690 290"
             fill="none"
             stroke="rgba(74,222,128,0.55)"
             strokeWidth="1.2"
@@ -321,7 +322,7 @@ export function CorrelationScene() {
 
           <path
             className="correlation-path"
-            d="M 50% 57% C 63% 58%, 72% 60%, 81% 66%"
+            d="M 500 570 C 630 580, 720 600, 810 660"
             fill="none"
             stroke="rgba(251,146,60,0.55)"
             strokeWidth="1.2"
@@ -331,7 +332,7 @@ export function CorrelationScene() {
 
           <path
             className="correlation-path"
-            d="M 69% 29% C 76% 37%, 79% 50%, 81% 66%"
+            d="M 690 290 C 760 370, 790 500, 810 660"
             fill="none"
             stroke="rgba(251,113,133,0.35)"
             strokeWidth="1"
@@ -342,7 +343,7 @@ export function CorrelationScene() {
 
           <path
             className="correlation-path"
-            d="M 31% 39% C 46% 24%, 58% 21%, 69% 29%"
+            d="M 310 390 C 460 240, 580 210, 690 290"
             fill="none"
             stroke="rgba(167,139,250,0.22)"
             strokeWidth="1"
@@ -537,7 +538,7 @@ export function CorrelationScene() {
             border-white/[0.14]
             bg-black/[0.45]
             p-5
-            backdrop-blur-xl
+            
             shadow-[0_20px_60px_rgba(0,0,0,0.25)]
           "
         >
@@ -591,7 +592,7 @@ export function CorrelationScene() {
             bg-black/[0.3]
             px-5
             py-4
-            backdrop-blur-md
+            
           "
         >
           <p className="font-mono text-[12px] tracking-[0.15em] text-slate-400">
@@ -621,7 +622,7 @@ export function CorrelationScene() {
             text-center
           "
         >
-          <p className="font-mono text-[12px] tracking-[0.22em] text-slate-500">
+          <p className="font-mono text-[12px] tracking-[0.22em] text-[var(--text-secondary)] font-medium">
             RELATIONSHIP ENGINE ACTIVE
           </p>
 
@@ -752,7 +753,7 @@ function CorrelationNode({
         justify-center
         rounded-full
         border
-        backdrop-blur-xl
+        
         ${sizeClass}
       `}
       style={{
@@ -882,7 +883,7 @@ function TargetNode() {
           border
           border-white/[0.3]
           bg-black/[0.6]
-          backdrop-blur-xl
+          
         "
       >
         <span className="font-mono text-[12px] tracking-[0.2em] text-blue-300">
@@ -927,7 +928,7 @@ function CorrelationKPI({
         border
         bg-black/[0.38]
         p-4
-        backdrop-blur-xl
+        
       "
       style={{
         borderColor: style.border,

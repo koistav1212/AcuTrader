@@ -182,12 +182,12 @@ export function ThesisScene() {
             px-7
             py-6
             shadow-[0_25px_70px_rgba(0,0,0,0.28)]
-            backdrop-blur-xl
+            
           "
         >
           <div className="flex items-start justify-between gap-6">
             <div>
-              <p className="font-mono text-[8px] uppercase tracking-[0.32em] text-slate-400">
+              <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-slate-400">
                 CONSOLIDATED INVESTMENT READ
               </p>
 
@@ -197,13 +197,13 @@ export function ThesisScene() {
                 INC.
               </h2>
 
-              <p className="mt-3 font-mono text-[8px] tracking-[0.28em] text-slate-400">
+              <p className="mt-3 font-mono text-[10px] tracking-[0.28em] text-slate-400">
                 AAPL / NASDAQ / EQUITY RESEARCH
               </p>
             </div>
 
             <div className="shrink-0 text-right">
-              <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-slate-500">
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--text-secondary)] font-medium">
                 PLATFORM
                 <br />
                 CONFIDENCE
@@ -218,29 +218,29 @@ export function ThesisScene() {
           {/* STATUS BLOCKS */}
           <div className="mt-7 grid grid-cols-3 gap-2 border-t border-white/10 pt-5">
             <div className="border border-[#4d8ee8]/60 bg-black/10 px-3 py-3">
-              <span className="block font-mono text-[7px] tracking-[0.18em] text-slate-500">TECHNICAL</span>
-              <span className="mt-2 block font-mono text-[8px] tracking-[0.2em] text-[#76a9f7]">BULLISH</span>
+              <span className="block font-mono text-[10px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">TECHNICAL</span>
+              <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-[#76a9f7]">BULLISH</span>
             </div>
 
             <div className="border border-[#4fae82]/60 bg-black/10 px-3 py-3">
-              <span className="block font-mono text-[7px] tracking-[0.18em] text-slate-500">FLOW</span>
-              <span className="mt-2 block font-mono text-[8px] tracking-[0.2em] text-[#72d69e]">POSITIVE</span>
+              <span className="block font-mono text-[10px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">FLOW</span>
+              <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-[#72d69e]">POSITIVE</span>
             </div>
 
             <div className="border border-[#d48642]/60 bg-black/10 px-3 py-3">
-              <span className="block font-mono text-[7px] tracking-[0.18em] text-slate-500">RISK</span>
-              <span className="mt-2 block font-mono text-[8px] tracking-[0.2em] text-[#e3a363]">MANAGED</span>
+              <span className="block font-mono text-[10px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">RISK</span>
+              <span className="mt-2 block font-mono text-[10px] tracking-[0.2em] text-[#e3a363]">MANAGED</span>
             </div>
           </div>
 
           {/* CONFIDENCE TRAJECTORY */}
           <div className="mt-6 border-t border-white/[0.08] pt-5">
             <div className="mb-3 flex items-center justify-between">
-              <p className="font-mono text-[8px] uppercase tracking-[0.24em] text-slate-500">
+              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[var(--text-secondary)] font-medium">
                 Confidence trajectory
               </p>
 
-              <span className="font-mono text-[8px] text-[#72d69e]">
+              <span className="font-mono text-[10px] text-[#72d69e]">
                 +12.4%
               </span>
             </div>
@@ -280,7 +280,7 @@ export function ThesisScene() {
           {/* POSITION */}
           <div className="mt-5 flex items-end justify-between">
             <div>
-              <p className="font-mono text-[8px] uppercase tracking-[0.24em] text-slate-500">
+              <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[var(--text-secondary)] font-medium">
                 Position bias
               </p>
 
@@ -297,7 +297,7 @@ export function ThesisScene() {
                 px-5
                 py-3
                 font-mono
-                text-[8px]
+                text-[10px]
                 uppercase
                 tracking-[0.2em]
                 text-slate-300
@@ -328,12 +328,12 @@ export function ThesisScene() {
             border-blue-400/30
             bg-[#182131]/90
             p-5
-            backdrop-blur-xl
+            
           "
         >
           <div className="h-[2px] w-9 bg-blue-400" />
 
-          <p className="mt-4 font-mono text-[8px] uppercase tracking-[0.22em] text-blue-300">
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-blue-300">
             Technical Alignment
           </p>
 
@@ -341,7 +341,7 @@ export function ThesisScene() {
             4 / 5
           </p>
 
-          <p className="mt-1 font-mono text-[7px] tracking-[0.18em] text-slate-500">
+          <p className="mt-1 font-mono text-[10px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">
             timeframes bullish
           </p>
         </div>
@@ -362,12 +362,12 @@ export function ThesisScene() {
             border-emerald-400/30
             bg-[#16261f]/90
             p-5
-            backdrop-blur-xl
+            
           "
         >
           <div className="h-[2px] w-9 bg-emerald-400" />
 
-          <p className="mt-4 font-mono text-[8px] uppercase tracking-[0.22em] text-emerald-300">
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-300">
             Institutional Flow
           </p>
 
@@ -375,7 +375,7 @@ export function ThesisScene() {
             +18%
           </p>
 
-          <p className="mt-1 font-mono text-[7px] tracking-[0.18em] text-slate-500">
+          <p className="mt-1 font-mono text-[10px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">
             accumulation trend
           </p>
         </div>
@@ -396,12 +396,12 @@ export function ThesisScene() {
             border-orange-400/30
             bg-[#2a2018]/90
             p-5
-            backdrop-blur-xl
+            
           "
         >
           <div className="h-[2px] w-9 bg-orange-400" />
 
-          <p className="mt-4 font-mono text-[8px] uppercase tracking-[0.22em] text-orange-300">
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-orange-300">
             Risk / Reward
           </p>
 
@@ -409,7 +409,7 @@ export function ThesisScene() {
             2.8x
           </p>
 
-          <p className="mt-1 font-mono text-[7px] tracking-[0.18em] text-slate-500">
+          <p className="mt-1 font-mono text-[10px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">
             favorable structure
           </p>
         </div>
@@ -430,12 +430,12 @@ export function ThesisScene() {
             border-violet-400/30
             bg-[#1d172b]/90
             p-5
-            backdrop-blur-xl
+            
           "
         >
           <div className="h-[2px] w-9 bg-violet-400" />
 
-          <p className="mt-4 font-mono text-[8px] uppercase tracking-[0.22em] text-violet-300">
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-violet-300">
             Market Regime
           </p>
 
@@ -443,7 +443,7 @@ export function ThesisScene() {
             BULLISH
           </p>
 
-          <p className="mt-1 font-mono text-[7px] tracking-[0.18em] text-slate-500">
+          <p className="mt-1 font-mono text-[10px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">
             risk appetite stable
           </p>
         </div>
@@ -464,12 +464,12 @@ export function ThesisScene() {
             border-emerald-400/30
             bg-[#13251e]/90
             p-5
-            backdrop-blur-xl
+            
           "
         >
           <div className="h-[2px] w-9 bg-emerald-400" />
 
-          <p className="mt-4 font-mono text-[8px] uppercase tracking-[0.22em] text-emerald-300">
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-300">
             Catalyst Score
           </p>
 
@@ -477,7 +477,7 @@ export function ThesisScene() {
             7.8
           </p>
 
-          <p className="mt-1 font-mono text-[7px] tracking-[0.18em] text-slate-500">
+          <p className="mt-1 font-mono text-[10px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">
             next 90 days
           </p>
         </div>
@@ -612,7 +612,7 @@ function SignalBox({
         py-3
       `}
     >
-      <p className="font-mono text-[7px] tracking-[0.18em] text-slate-500">
+      <p className="font-mono text-[10px] tracking-[0.18em] text-[var(--text-secondary)] font-medium">
         {label}
       </p>
 
@@ -620,7 +620,7 @@ function SignalBox({
         className={`
           mt-2
           font-mono
-          text-[8px]
+          text-[10px]
           tracking-[0.2em]
           ${tones[tone].text}
         `}

@@ -1,133 +1,184 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "../../lib/constants/nav";
 import { cn } from "../../lib/utils";
-import { useState, useRef, useEffect } from "react";
-
-import { useTheme } from "@/app/context/ThemeContext";
 import { useUser } from "@/app/context/UserContext";
-import { Sun, Moon, User, Settings, LogOut } from "lucide-react";
 
 export function DesktopNavbar() {
   const pathname = usePathname();
-  const { theme, toggleTheme } = useTheme();
   const { logout, user } = useUser();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-[var(--bg-secondary)]/90 backdrop-blur-sm hidden sm:block">
-      <div className="container flex h-16 items-center justify-between mx-auto">
+    <header
+      className="
+        sticky top-0 z-40 hidden w-full sm:block
+        border-b border-[var(--border-strong)]
+        bg-[var(--bg-primary)]/95
+        backdrop-blur-xl
+        shadow-[0_6px_24px_rgba(28,32,38,0.04)]
+      "
+    >
+      <div className="mx-auto flex h-[72px] items-center justify-between px-6 md:px-10">
 
-        {/* BRAND / LOGO */}
-        <Link href="/" className="flex items-center space-x-2">
-          <Image src="/icon.png" alt="AcuTrader Logo" width={32} height={32} className="h-8 w-8 flex items-center justify-center rounded-lg bg-transparent text-white font-bold"/>
-          
-          <span className="hidden sm:inline-block font-semibold text-lg tracking-tight text-[var(--text)]">
-            AcuTrader
-          </span>
-        </Link>
+        {/* LEFT SIDE */}
+        <div className="flex h-full items-center gap-14">
 
-        {/* NAVIGATION LINKS */}
-        <nav className="flex items-center space-x-6 text-sm font-medium">
-          {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href;
-
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "transition-colors pb-1",
-                  isActive
-                    ? "text-[var(--accent)] font-semibold border-b-2 border-[var(--accent)]"
-                    : "text-[var(--text-secondary)] hover:text-[var(--accent)]"
-                )}
-              >
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* RIGHT SIDE: THEME BUTTON + PROFILE */}
-        <div className="flex items-center space-x-3">
-
-          {/* THEME TOGGLE */}
-          <button
-            onClick={toggleTheme}
-            className="rounded-full p-2 border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--accent)]/20 transition"
+          {/* BRAND */}
+          <Link
+            href="/"
+            className="
+              group flex items-center
+              transition-opacity duration-200
+              hover:opacity-75
+            "
           >
-            {theme === "dark" ? (
-              <Sun className="w-4 h-4 text-yellow-300" />
-            ) : (
-              <Moon className="w-4 h-4 text-[var(--text)]" />
-            )}
-          </button>
-
-          {/* PROFILE DROPDOWN */}
-          <div className="relative" ref={menuRef}>
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 border border-[var(--border)] rounded-full bg-[var(--card)] hover:bg-[var(--accent)]/10 transition-colors flex items-center justify-center focus:outline-none"
+            <span
+              className="
+                font-mono
+                text-[13px]
+                font-bold
+                tracking-[0.22em]
+                text-[var(--text-primary)]
+              "
             >
-              <div className="h-4 w-4 rounded-full bg-[var(--accent)] flex items-center justify-center text-[10px] text-white font-bold">
-                 {user?.firstName ? user.firstName[0].toUpperCase() : <User size={12}/>}
-              </div>
-            </button>
+              ACUTRADER
+            </span>
 
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="px-4 py-2 border-b border-[var(--border)]">
-                   <p className="text-sm font-semibold text-[var(--text)] truncate">
-                      {user?.firstName || 'User'} {user?.lastName || ''}
-                   </p>
-                   <p className="text-xs text-[var(--text-secondary)] truncate">
-                      {user?.email || ''}
-                   </p>
-                </div>
-                
-                <div className="py-1">
-                  <Link 
-                    href="/profile" 
-                    className="flex items-center px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--bg-secondary)] transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
+            <span
+              className="
+                ml-3 h-1.5 w-1.5
+                bg-[var(--signal-blue)]
+                transition-transform duration-300
+                group-hover:scale-125
+              "
+            />
+          </Link>
+
+          {/* NAVIGATION */}
+          {user && (
+            <nav className="flex h-full items-center gap-2">
+
+              {NAV_ITEMS.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (
+                    pathname.startsWith(item.href) &&
+                    item.href !== "/dashboard" &&
+                    item.href !== "/"
+                  );
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      `
+                      group relative flex h-full items-center
+                      px-4
+                      font-mono
+                      text-[11px]
+                      tracking-[0.14em]
+                      uppercase
+                      transition-all duration-300
+                      `,
+                      isActive
+                        ? `
+                          font-extrabold
+                          text-[#111827]
+                        `
+                        : `
+                          font-semibold
+                          text-[var(--text-secondary)]
+                          hover:bg-black/[0.035]
+                          hover:text-[#111827]
+                        `
+                    )}
                   >
-                    <Settings className="w-4 h-4 mr-2 text-[var(--text-secondary)]" />
-                    Settings
+                    {/* NAV TEXT */}
+                    <span className="relative z-10">
+                      {item.name}
+                    </span>
+
+                    {/* ACTIVE INDICATOR */}
+                    <span
+                      className={cn(
+                        `
+                        absolute bottom-0 left-1/2
+                        h-[3px]
+                        -translate-x-1/2
+                        transition-all duration-300
+                        `,
+                        isActive
+                          ? `
+                            w-[calc(100%-20px)]
+                            bg-[#111827]
+                          `
+                          : `
+                            w-0
+                            h-[2px]
+                            bg-[var(--accent)]
+                            group-hover:w-[calc(100%-28px)]
+                          `
+                      )}
+                    />
+
+                    {/* ACTIVE SIDE MARKER */}
+                    {isActive && (
+                      <span
+                        className="
+                          absolute left-1 top-1/2
+                          h-1 w-1
+                          -translate-y-1/2
+                          bg-[var(--signal-blue)]
+                        "
+                      />
+                    )}
                   </Link>
-                  <button
-                    onClick={() => {
-                      logout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="flex w-full items-center px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+                );
+              })}
 
+            </nav>
+          )}
         </div>
+
+        {/* RIGHT SIDE */}
+        <div
+          className="
+            flex items-center gap-7
+            font-mono
+            text-[10px]
+            tracking-[0.14em]
+            uppercase
+          "
+        >
+          {user && (
+            <div className="flex items-center gap-7">
+              <div className="flex items-center gap-3">
+                <span className="h-1.5 w-1.5 bg-[var(--signal-green)]" />
+                <span className="font-semibold text-[var(--text-primary)]">
+                  {user.firstName || "USER"}
+                </span>
+              </div>
+
+              <div className="h-4 w-px bg-[var(--border-strong)]" />
+
+              <button
+                onClick={() => logout()}
+                className="
+                  font-semibold
+                  text-[var(--text-secondary)]
+                  transition-all duration-200
+                  hover:text-[var(--signal-red)]
+                "
+              >
+                SIGN OUT
+              </button>
+            </div>
+          )}
+        </div>
+
       </div>
     </header>
   );

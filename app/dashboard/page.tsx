@@ -34,7 +34,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--bg-secondary)] backdrop-blur lg:hidden">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <div className="mx-auto flex max-w-full items-center justify-between px-4 py-3">
 
         {/* LOGO + BRAND */}
         <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
 const Footer: React.FC = () => {
   return (
     <footer className="border-t border-[var(--border)] bg-[var(--bg-secondary)] lg:hidden fixed bottom-0 left-0 right-0 z-40">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2 text-[0.75rem] text-[var(--text-secondary)]">
+      <div className="mx-auto flex max-w-full items-center justify-between px-4 py-2 text-[0.75rem] text-[var(--text-secondary)]">
         AcuTrader MVP
       </div>
     </footer>
@@ -206,8 +206,7 @@ export default function DashboardPage() {
         onClose={() => setIsMenuOpen(false)}
       />
 
-      {/* MAIN CONTENT */}
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-10 pt-6 lg:px-6 lg:pt-8 lg:mt-0 mt-16">
+      <main className="flex w-full max-w-full flex-1 flex-col px-4 pb-10 pt-6 lg:px-6 lg:pt-8 lg:mt-0 mt-16">
         <div className="mb-5">
           <h1 className="text-xl font-semibold sm:text-2xl text-[var(--text)]">
             {header.title}

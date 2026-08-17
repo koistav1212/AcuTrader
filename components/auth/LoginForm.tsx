@@ -1,17 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, AlertCircle, CheckCircle } from "lucide-react";
-import { cn } from "@/app/lib/utils";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/app/context/UserContext";
 
 interface LoginFormProps {
-  onToggle: () => void;
+  onToggle?: () => void;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onToggle }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/dashboard";
+
   const { login } = useUser();
   const [formData, setFormData] = useState({
     email: "",
@@ -48,9 +49,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggle }) => {
     setIsLoading(true);
     
     try {
-// In LoginForm.tsx
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
-      const response = await fetch(`${API_BASE_URL}/auth/login`, { // Direct call to external API
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,8 +67,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggle }) => {
       // Store auth data via Context
       login(data.token, data.user);
 
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Redirect to next path
+      router.replace(next);
 
     } catch (err: any) {
       setLoginError(err.message || "An unexpected error occurred");
@@ -77,88 +77,122 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggle }) => {
   };
 
   return (
-    <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Welcome Back</h2>
-        <p className="text-gray-400">Sign in to access your professional dashboard</p>
-      </div>
+    <div className="w-full flex-1 bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center p-6">
+      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-16 items-center">
+        
+        {/* Left Branding */}
+        <div className="hidden md:block space-y-8">
+          <div>
+            <p className="research-label mb-4">ACUTRADER</p>
+            <h1 className="font-display text-5xl md:text-6xl leading-tight">
+              MARKET<br/>
+              INTELLIGENCE <br/>
+              RESEARCH <br/>
+              EXECUTION
+            </h1>
+          </div>
+        </div>
 
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Right Form Container */}
+        <div className="w-full max-w-md mx-auto space-y-12">
           
-          {loginError && (
-             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm flex items-center gap-2">
-                <AlertCircle size={16} />
-                {loginError}
-             </div>
-          )}
+          <div className="flex justify-between border-b border-[var(--border)] pb-4">
+            <span className="research-label">ACUTRADER</span>
+            <span className="research-label">SYSTEM ACCESS</span>
+          </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300 ml-1">Email</label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Mail className={`h-5 w-5 ${errors.email ? "text-red-400" : "text-gray-400 group-focus-within:text-blue-400"} transition-colors`} />
+          <div>
+            <p className="research-label mb-2">SECURE ACCESS</p>
+            <h2 className="font-display text-5xl">
+              LOGIN TO<br/>
+              PROCEED.
+            </h2>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {loginError && (
+              <div className="p-3 border border-red-500/20 text-red-500 font-mono text-[10px] tracking-wider uppercase">
+                {loginError}
               </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="research-label block">EMAIL</label>
               <input
                 type="email"
-                className={cn(
-                  "block w-full pl-11 pr-4 py-3.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300",
-                  errors.email && "border-red-500/50 focus:ring-red-500/30"
-                )}
-                placeholder="name@company.com"
+                className={`
+                  w-full
+                  border-b border-[var(--border)]
+                  bg-transparent
+                  px-0 py-4
+                  font-mono text-sm
+                  outline-none
+                  transition
+                  focus:border-[var(--accent)]
+                  ${errors.email ? 'border-red-500/50' : ''}
+                `}
+                placeholder="system@acutrader.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
+              {errors.email && <p className="text-[9px] font-mono text-red-500 mt-1 uppercase tracking-widest">{errors.email}</p>}
             </div>
-            {errors.email && <p className="text-xs text-red-400 ml-1">{errors.email}</p>}
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300 ml-1">Password</label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock className={`h-5 w-5 ${errors.password ? "text-red-400" : "text-gray-400 group-focus-within:text-blue-400"} transition-colors`} />
-              </div>
+            <div className="space-y-2">
+              <label className="research-label block">PASSWORD</label>
               <input
                 type="password"
-                className={cn(
-                  "block w-full pl-11 pr-4 py-3.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300",
-                   errors.password && "border-red-500/50 focus:ring-red-500/30"
-                )}
+                className={`
+                  w-full
+                  border-b border-[var(--border)]
+                  bg-transparent
+                  px-0 py-4
+                  font-mono text-sm
+                  outline-none
+                  transition
+                  focus:border-[var(--accent)]
+                  ${errors.password ? 'border-red-500/50' : ''}
+                `}
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
+              {errors.password && <p className="text-[9px] font-mono text-red-500 mt-1 uppercase tracking-widest">{errors.password}</p>}
             </div>
-            {errors.password && <p className="text-xs text-red-400 ml-1">{errors.password}</p>}
-          </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full relative overflow-hidden group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3.5 rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all duration-300 transform hover:-translate-y-0.5"
-          >
-            <span className={`flex items-center justify-center gap-2 ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}>
-              Sign In <ArrowRight size={18} />
-            </span>
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              </div>
-            )}
-          </button>
-        </form>
-
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-400">
-            Don&apos;t have an account?{" "}
-            <button 
-              onClick={onToggle}
-              className="font-medium text-blue-400 hover:text-blue-300 transition-colors"
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="
+                group
+                w-full
+                bg-[var(--text-primary)]
+                px-7 py-4
+                font-mono text-[10px]
+                tracking-[0.18em]
+                text-[var(--surface-solid)]
+                transition-all duration-300
+                hover:bg-[var(--accent)]
+                hover:-translate-y-[1px]
+                flex justify-between items-center
+              "
             >
-              Sign up now
+              <span>{isLoading ? "AUTHENTICATING..." : "ENTER PLATFORM"}</span>
+              <span className="transition-transform group-hover:translate-x-1">→</span>
             </button>
-          </p>
+
+          </form>
+          
+          {onToggle && (
+             <div className="mt-8">
+               <button 
+                 onClick={onToggle}
+                 className="research-label text-[var(--accent)] hover:text-[var(--text-primary)] transition-colors"
+               >
+                 REQUEST ACCESS →
+               </button>
+             </div>
+          )}
         </div>
       </div>
     </div>

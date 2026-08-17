@@ -112,7 +112,7 @@ export function CinematicScene({
               alt={`AcuTrader Scene ${index}`}
               fill
               priority={index < 3}
-              className={`hero-analyst ${fullBleedImage ? "object-cover" : "object-contain"} ${imagePositionClass} opacity-95 grayscale brightness-[0.42] contrast-[1.15]`}
+              className={`hero-analyst ${fullBleedImage ? "object-cover" : "object-contain"} ${imagePositionClass} opacity-100 grayscale brightness-[0.85] contrast-[1.15]`}
             />
           </div>
         </div>

@@ -143,7 +143,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setHoldings([]);
     setWatchlist([]);
     setTransactions([]);
-    router.push('/api/auth/login'); // Redirect to login
+    router.push('/auth/login'); // Redirect to login page
   }, [router]);
 
   const toggleWatchlist = async (symbol: string) => {
@@ -234,10 +234,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     } else {
         setLoading(false);
-        // If no token found, redirect to authentication page
-        if (window.location.pathname !== '/') {
-             router.push('/');
-        }
     }
   }, [fetchUserData, logout, router]);
 

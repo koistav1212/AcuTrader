@@ -59,10 +59,10 @@ export function ResearchPipelineScene() {
             
             <div className="pipeline-card border border-border bg-surface p-4 shadow-sm z-10 flex justify-between items-center">
               <div className="flex gap-4 items-center">
-                <span className="font-mono text-[9px] text-muted tracking-widest">{stage.id}</span>
+                <span className="font-mono text-[10px] text-muted tracking-widest">{stage.id}</span>
                 <h3 className="font-serif text-lg text-text">{stage.label}</h3>
               </div>
-              <span className="font-mono text-[9px] bg-bg px-2 py-1 text-muted tracking-widest">{stage.value}</span>
+              <span className="font-mono text-[10px] bg-bg px-2 py-1 text-muted tracking-widest">{stage.value}</span>
             </div>
 
             {i < PIPELINE_STAGES.length - 1 && (
