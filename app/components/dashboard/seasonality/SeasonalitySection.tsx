@@ -6,82 +6,51 @@ import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { SeasonalityTabs, SeasonalityMode } from "./SeasonalityTabs";
 import { YearSelector } from "./YearSelector";
 import { SeasonalityInsights } from "./SeasonalityInsights";
-import { 
-  HistoricalDataPoint, 
-  calculateMonthlySeasonality, 
-  calculateWeeklySeasonality, 
-  calculateYearlySeasonality 
-} from "@/utils/seasonality";
+import { useHistoricalData } from "@/app/hooks/useHistoricalData";
+import { calculateMonthlySeasonality, calculateWeeklySeasonality, calculateYearlySeasonality } from "@/utils/seasonality";
+
+import { SymbolSearch } from "../workspace/SymbolSearch";
 
 const LazySeasonalityChart = dynamic(() => import("./SeasonalityChart").then(m => m.SeasonalityChart), {
   ssr: false,
   loading: () => <SeasonalitySkeleton />
 });
 
-export function SeasonalitySection() {
+export function SeasonalitySection({ symbol = "SPY" }: { symbol?: string }) {
+  const [localSymbol, setLocalSymbol] = useState(symbol);
   const [mode, setMode] = useState<SeasonalityMode>("Monthly");
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   
-  const [data, setData] = useState<HistoricalDataPoint[]>([]);
-  const [status, setStatus] = useState<"loading" | "success" | "error" | "empty">("loading");
+  // Sync if global symbol changes, optional. But user said "not the one globally", 
+  // so we won't sync it aggressively after initial mount unless desired. 
+  // We'll just leave it fully isolated after initialization.
 
-  const fetchSeasonalityData = useCallback(async () => {
-    setStatus("loading");
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://acutrader-backend.onrender.com/api";
-      // Fetching SPY as a benchmark for general dashboard seasonality
-      const res = await fetch(`${baseUrl}/market/historical/SPY?period=10y`);
-      
-      if (!res.ok) throw new Error("Failed to fetch historical data");
-      
-      const json = await res.json();
-      let rawData: any[] = [];
-      
-      if (Array.isArray(json)) rawData = json;
-      else if (json["10y"] && Array.isArray(json["10y"])) rawData = json["10y"];
-      
-      if (rawData.length < 252) { // Less than a year of trading days
-        setStatus("empty");
-        return;
-      }
+  const { data: apiData, isLoading, isError, refetch } = useHistoricalData(localSymbol, "10Y", "1d");
 
-      const formattedData: HistoricalDataPoint[] = rawData.map(d => ({
-        date: d.date,
-        open: d.open,
-        close: d.close,
-        high: d.high,
-        low: d.low,
-        volume: d.volume
-      })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const hasInsufficientData = apiData && apiData.length < 252;
+  const status = isLoading ? "loading" : isError ? "error" : (!apiData || hasInsufficientData) ? "empty" : "success";
 
-      setData(formattedData);
-
-      // Extract available years
-      const years = new Set<number>();
-      formattedData.forEach(d => years.add(new Date(d.date).getFullYear()));
-      const yearsArr = Array.from(years).sort((a, b) => a - b);
-      setAvailableYears(yearsArr);
-      
-      // Default selected years (last 3 years)
-      if (yearsArr.length > 0) {
-        setSelectedYears(yearsArr.slice(-3));
-      }
-
-      setStatus("success");
-    } catch (error) {
-      console.error("Seasonality fetch error", error);
-      setStatus("error");
+  const monthlyData = useMemo(() => {
+    if (mode === "Monthly" && status === "success" && apiData) {
+      return calculateMonthlySeasonality(apiData);
     }
-  }, []);
+    return [];
+  }, [mode, status, apiData]);
 
-  useEffect(() => {
-    fetchSeasonalityData();
-  }, [fetchSeasonalityData]);
+  const weeklyData = useMemo(() => {
+    if (mode === "Weekly" && status === "success" && apiData) {
+      return calculateWeeklySeasonality(apiData);
+    }
+    return [];
+  }, [mode, status, apiData]);
 
-  const monthlyData = useMemo(() => calculateMonthlySeasonality(data), [data]);
-  const weeklyData = useMemo(() => calculateWeeklySeasonality(data), [data]);
-  const yearlyData = useMemo(() => calculateYearlySeasonality(data, selectedYears), [data, selectedYears]);
+  const yearlyData = useMemo(() => {
+    if (mode === "Yearly" && status === "success" && apiData) {
+      return calculateYearlySeasonality(apiData);
+    }
+    return [];
+  }, [mode, status, apiData]);
 
   return (
     <section className="grid gap-6 p-6 xl:grid-cols-12 bg-transparent">
@@ -92,9 +61,18 @@ export function SeasonalitySection() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h2 className="section-title text-[20px] md:text-[24px]">SEASONALITY ANALYSIS</h2>
-            <p className="mt-1 font-sans text-[13px] md:text-[14px] text-[var(--text-secondary)]">
-              Historical price behavior across monthly, weekly, and yearly cycles
-            </p>
+            <div className="mt-1 flex items-center gap-3">
+              <p className="font-sans text-[13px] md:text-[14px] text-[var(--text-secondary)] whitespace-nowrap">
+                {mode} Historical Returns — {localSymbol}
+              </p>
+              <div className="w-48 ml-2">
+                <SymbolSearch 
+                  value={localSymbol}
+                  onSelect={setLocalSymbol}
+                  placeholder="Search symbol..."
+                />
+              </div>
+            </div>
           </div>
           <SeasonalityTabs activeMode={mode} onChange={setMode} />
         </div>
@@ -129,7 +107,7 @@ export function SeasonalitySection() {
                 </p>
               </div>
               <button 
-                onClick={fetchSeasonalityData}
+                onClick={() => refetch()}
                 className="flex items-center gap-2 px-4 py-2 border border-[var(--border)] bg-[var(--surface-muted)] hover:bg-[var(--surface)] text-[13px] font-semibold rounded-md transition-colors"
               >
                 <RefreshCw className="w-4 h-4" /> Retry Analysis
@@ -174,7 +152,7 @@ export function SeasonalitySection() {
           </div>
         ) : status === "success" ? (
           <div className="xl:mt-[52px] h-[calc(100%-52px)]">
-             <SeasonalityInsights monthlyData={monthlyData} />
+             <SeasonalityInsights symbol={localSymbol} monthlyData={monthlyData} weeklyData={weeklyData} />
           </div>
         ) : (
           <div className="xl:mt-[52px] h-[calc(100%-52px)] border border-[var(--border)] rounded-md bg-[var(--surface-solid)] opacity-50 flex items-center justify-center p-6 text-center">

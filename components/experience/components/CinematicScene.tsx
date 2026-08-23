@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import Image from "next/image";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 interface CinematicSceneProps {
   index: number;
@@ -25,7 +23,7 @@ export function CinematicScene({
   children,
   id,
 }: CinematicSceneProps) {
-  const sectionRef = useRef<HTMLElement>(null);
+  const sceneRef = useRef<HTMLElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
 
@@ -45,55 +43,8 @@ export function CinematicScene({
     imageContainerClass = "items-end justify-center";
   }
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Parallax effect on the protagonist image to give it life during scrolling
-      gsap.to(imageRef.current, {
-        yPercent: -5,
-        ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true,
-        }
-      });
-      
-      // Reveal the title when scene enters
-      gsap.fromTo(titleRef.current, 
-        { opacity: 0, y: 30 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 60%",
-            end: "top 20%",
-            scrub: 1,
-          }
-        }
-      );
-      
-      // Scene exit crossfade
-      gsap.to([imageRef.current, titleRef.current], {
-        opacity: 0,
-        y: -50,
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "bottom 70%",
-          end: "bottom top",
-          scrub: true,
-        }
-      });
-      
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, [position]);
-
   return (
-    <section id={id} ref={sectionRef} className="scene-section relative h-screen w-full overflow-hidden bg-bg">
+    <section id={id} ref={sceneRef as React.RefObject<HTMLElement>} className="scene-section relative h-screen w-full overflow-hidden bg-bg">
       {/* Z-0 Background Layer */}
       <div className="absolute inset-0 z-0 bg-bg pointer-events-none">
         {/* Subtle grid to maintain institutional feel */}

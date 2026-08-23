@@ -1,157 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
+import React, { useRef } from "react";
 import { CinematicScene } from "../components/CinematicScene";
 
 export function ThesisScene() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const panel = containerRef.current?.querySelector(".thesis-panel");
-      const floatingCards = gsap.utils.toArray(".thesis-kpi");
-      const chartPath =
-        containerRef.current?.querySelector(".chart-path");
-      const confidence =
-        containerRef.current?.querySelector(".confidence-number");
-
-      /* ---------------------------------------------
-         INITIAL STATES
-      --------------------------------------------- */
-
-      if (panel) {
-        gsap.set(panel, {
-          opacity: 0,
-          x: -40,
-          y: 25,
-          filter: "blur(8px)",
-        });
-      }
-
-      gsap.set(floatingCards, {
-        opacity: 0,
-        y: 35,
-        scale: 0.94,
-      });
-
-      if (chartPath) {
-        const length = (
-          chartPath as SVGPathElement
-        ).getTotalLength();
-
-        gsap.set(chartPath, {
-          strokeDasharray: length,
-          strokeDashoffset: length,
-        });
-      }
-
-      /* ---------------------------------------------
-         LEFT PANEL ENTRANCE
-      --------------------------------------------- */
-
-      if (panel) {
-        gsap.to(panel, {
-          opacity: 1,
-          x: 0,
-          y: 0,
-          filter: "blur(0px)",
-          ease: "power3.out",
-
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 75%",
-            end: "center center",
-            scrub: 1,
-          },
-        });
-      }
-
-      /* ---------------------------------------------
-         KPI ENTRANCE
-      --------------------------------------------- */
-
-      gsap.to(floatingCards, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        stagger: 0.12,
-        ease: "power3.out",
-
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 65%",
-          end: "center center",
-          scrub: 1,
-        },
-      });
-
-      /* ---------------------------------------------
-         CONFIDENCE NUMBER
-      --------------------------------------------- */
-
-      if (confidence) {
-        gsap.fromTo(
-          confidence,
-          { innerHTML: 0 },
-          {
-            innerHTML: 78,
-            duration: 1.8,
-            ease: "power2.out",
-
-            snap: {
-              innerHTML: 1,
-            },
-
-            scrollTrigger: {
-              trigger: containerRef.current,
-              start: "top 55%",
-            },
-
-            onUpdate: function () {
-              confidence.innerHTML =
-                Math.round(
-                  parseFloat(confidence.innerHTML)
-                ) + "%";
-            },
-          }
-        );
-      }
-
-      /* ---------------------------------------------
-         CONFIDENCE CHART
-      --------------------------------------------- */
-
-      if (chartPath) {
-        gsap.to(chartPath, {
-          strokeDashoffset: 0,
-          duration: 1.8,
-          ease: "power2.out",
-
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 55%",
-          },
-        });
-      }
-
-      /* ---------------------------------------------
-         SUBTLE FLOATING MOTION
-      --------------------------------------------- */
-
-      floatingCards.forEach((card: any, i) => {
-        gsap.to(card, {
-          y: i % 2 === 0 ? -8 : 8,
-          duration: 3 + i * 0.4,
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-        });
-      });
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sceneRef = useRef<HTMLDivElement>(null);
 
   return (
     <CinematicScene
@@ -161,8 +14,8 @@ export function ThesisScene() {
       title="INVESTMENT THESIS."
     >
       <div
-        ref={containerRef}
-        className="absolute inset-0 overflow-hidden"
+        ref={sceneRef}
+        className="absolute inset-0 overflow-hidden w-full h-full"
       >
         {/* =====================================================
             LEFT — CONSOLIDATED THESIS PANEL
@@ -210,7 +63,7 @@ export function ThesisScene() {
               </p>
 
               <p className="confidence-number mt-2 font-serif text-[46px] leading-none text-[#8fb6f4]">
-                0%
+                78%
               </p>
             </div>
           </div>

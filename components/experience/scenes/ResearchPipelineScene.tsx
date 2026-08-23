@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
+"use client";
+
+import React, { useRef } from "react";
 import { CinematicScene } from "../components/CinematicScene";
 
 const PIPELINE_STAGES = [
@@ -11,39 +12,7 @@ const PIPELINE_STAGES = [
 ];
 
 export function ResearchPipelineScene() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray(".pipeline-card");
-      const lines = gsap.utils.toArray(".pipeline-line");
-      
-      gsap.set(cards, { opacity: 0, x: -30 });
-      gsap.set(lines, { scaleY: 0, transformOrigin: "top center" });
-      
-      // Sequence
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 70%",
-          end: "center 30%",
-          scrub: 1,
-        }
-      });
-
-      cards.forEach((card: any, i) => {
-        // Animate card
-        tl.to(card, { opacity: 1, x: 0, duration: 1 }, i * 0.5);
-        // Animate connecting line to next card
-        if (i < cards.length - 1) {
-          tl.to(lines[i] as Element, { scaleY: 1, duration: 0.5 }, (i * 0.5) + 0.5);
-        }
-      });
-
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sceneRef = useRef<HTMLDivElement>(null);
 
   return (
     <CinematicScene 
@@ -52,7 +21,7 @@ export function ResearchPipelineScene() {
       position="center" 
       title="THE RESEARCH PIPELINE."
     >
-      <div ref={containerRef} className="absolute right-[15%] top-[25%] w-[35vw] flex flex-col">
+      <div ref={sceneRef} className="absolute right-[15%] top-[25%] w-[35vw] flex flex-col h-full w-full">
         
         {PIPELINE_STAGES.map((stage, i) => (
           <div key={i} className="relative flex flex-col">

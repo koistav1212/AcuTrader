@@ -7,180 +7,140 @@ export interface HistoricalDataPoint {
   volume?: number;
 }
 
-export interface MonthlySeasonality {
-  month: number;
-  monthName: string;
-  avgReturn: number;
+export interface SeasonalityMetrics {
+  averageReturn: number;
   medianReturn: number;
-  winRate: number;
+  positiveFrequency: number;
+  sampleSize: number;
 }
 
-export interface WeeklySeasonality {
-  week: number;
-  avgReturn: number;
+export interface MonthlySeasonality extends SeasonalityMetrics {
+  month: string;
+}
+
+export interface WeeklySeasonality extends SeasonalityMetrics {
+  day: string;
 }
 
 export interface YearlySeasonality {
   year: number;
-  data: { date: string; cumulativeReturn: number }[];
+  return: number;
 }
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function getMetrics(returns: number[]): SeasonalityMetrics {
+  const sampleSize = returns.length;
+  if (sampleSize === 0) {
+    return { averageReturn: 0, medianReturn: 0, positiveFrequency: 0, sampleSize: 0 };
+  }
+
+  const sum = returns.reduce((a, b) => a + b, 0);
+  const averageReturn = sum / sampleSize;
+
+  const sorted = [...returns].sort((a, b) => a - b);
+  const medianReturn = sampleSize % 2 === 0
+    ? (sorted[sampleSize / 2 - 1] + sorted[sampleSize / 2]) / 2
+    : sorted[Math.floor(sampleSize / 2)];
+
+  const wins = returns.filter(r => r > 0).length;
+  const positiveFrequency = (wins / sampleSize) * 100;
+
+  return { averageReturn, medianReturn, positiveFrequency, sampleSize };
+}
 
 export function calculateMonthlySeasonality(data: HistoricalDataPoint[]): MonthlySeasonality[] {
   if (!data || data.length === 0) return [];
 
   // Group by year-month
-  const monthlyData: Record<string, { start: number; end: number; returns: number }> = {};
-
-  let currentMonthKey = "";
-  let monthStartPrice = 0;
+  const monthlyData: Record<string, { start: number; end: number }> = {};
 
   for (let i = 0; i < data.length; i++) {
     const point = data[i];
     const date = new Date(point.date);
     const yearMonth = `${date.getFullYear()}-${date.getMonth()}`;
 
-    if (yearMonth !== currentMonthKey) {
-      if (currentMonthKey !== "" && i > 0) {
-        monthlyData[currentMonthKey].end = data[i - 1].close;
-        monthlyData[currentMonthKey].returns = (monthlyData[currentMonthKey].end / monthlyData[currentMonthKey].start) - 1;
-      }
-      currentMonthKey = yearMonth;
-      monthStartPrice = point.open || point.close; // Approximate if open missing
-      monthlyData[yearMonth] = { start: monthStartPrice, end: point.close, returns: 0 };
+    if (!monthlyData[yearMonth]) {
+      monthlyData[yearMonth] = { start: point.close, end: point.close };
     }
-  }
-  
-  if (currentMonthKey !== "") {
-    monthlyData[currentMonthKey].end = data[data.length - 1].close;
-    monthlyData[currentMonthKey].returns = (monthlyData[currentMonthKey].end / monthlyData[currentMonthKey].start) - 1;
+    // Update the end price to the latest seen in this month
+    monthlyData[yearMonth].end = point.close;
   }
 
-  // Aggregate by month
+  // Aggregate by month (0-11)
   const monthAgg: Record<number, number[]> = {};
   for (let i = 0; i < 12; i++) monthAgg[i] = [];
 
   Object.entries(monthlyData).forEach(([key, val]) => {
     const month = parseInt(key.split("-")[1], 10);
-    monthAgg[month].push(val.returns * 100);
+    const ret = ((val.end - val.start) / val.start) * 100;
+    monthAgg[month].push(ret);
   });
 
   return Array.from({ length: 12 }).map((_, i) => {
-    const returns = monthAgg[i].sort((a, b) => a - b);
-    const count = returns.length;
-    const wins = returns.filter(r => r > 0).length;
-    const sum = returns.reduce((a, b) => a + b, 0);
-
-    const avgReturn = count > 0 ? sum / count : 0;
-    const medianReturn = count > 0 ? (count % 2 === 0 ? (returns[count / 2 - 1] + returns[count / 2]) / 2 : returns[Math.floor(count / 2)]) : 0;
-    const winRate = count > 0 ? (wins / count) * 100 : 0;
-
+    const returns = monthAgg[i];
+    const metrics = getMetrics(returns);
     return {
-      month: i,
-      monthName: MONTH_NAMES[i],
-      avgReturn,
-      medianReturn,
-      winRate
+      month: MONTH_NAMES[i],
+      ...metrics,
     };
   });
-}
-
-// Simple ISO week number calculator
-function getWeekNumber(d: Date): number {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNum = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
-  return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
 }
 
 export function calculateWeeklySeasonality(data: HistoricalDataPoint[]): WeeklySeasonality[] {
-  if (!data || data.length === 0) return [];
+  if (!data || data.length < 2) return [];
 
-  // Group by year-week
-  const weeklyData: Record<string, { start: number; end: number; returns: number }> = {};
+  // 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri
+  const dayAgg: Record<number, number[]> = { 1: [], 2: [], 3: [], 4: [], 5: [] };
 
-  let currentWeekKey = "";
+  for (let i = 1; i < data.length; i++) {
+    const prev = data[i - 1];
+    const curr = data[i];
+    const date = new Date(curr.date);
+    const day = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
 
-  for (let i = 0; i < data.length; i++) {
-    const point = data[i];
-    const date = new Date(point.date);
-    const week = getWeekNumber(date);
-    const yearWeek = `${date.getFullYear()}-${week}`;
-
-    if (yearWeek !== currentWeekKey) {
-      if (currentWeekKey !== "" && i > 0) {
-        weeklyData[currentWeekKey].end = data[i - 1].close;
-        weeklyData[currentWeekKey].returns = (weeklyData[currentWeekKey].end / weeklyData[currentWeekKey].start) - 1;
+    if (day >= 1 && day <= 5) {
+      if (prev.close) {
+        const ret = ((curr.close - prev.close) / prev.close) * 100;
+        dayAgg[day].push(ret);
       }
-      currentWeekKey = yearWeek;
-      weeklyData[yearWeek] = { start: point.open || point.close, end: point.close, returns: 0 };
     }
   }
 
-  if (currentWeekKey !== "") {
-    weeklyData[currentWeekKey].end = data[data.length - 1].close;
-    weeklyData[currentWeekKey].returns = (weeklyData[currentWeekKey].end / weeklyData[currentWeekKey].start) - 1;
-  }
-
-  const weekAgg: Record<number, number[]> = {};
-  for (let i = 1; i <= 52; i++) weekAgg[i] = [];
-
-  Object.entries(weeklyData).forEach(([key, val]) => {
-    const week = parseInt(key.split("-")[1], 10);
-    if (week >= 1 && week <= 52) {
-      weekAgg[week].push(val.returns * 100);
-    }
-  });
-
-  return Array.from({ length: 52 }).map((_, i) => {
-    const returns = weekAgg[i + 1];
-    const sum = returns.reduce((a, b) => a + b, 0);
-    const count = returns.length;
+  return [1, 2, 3, 4, 5].map(day => {
+    const returns = dayAgg[day];
+    const metrics = getMetrics(returns);
     return {
-      week: i + 1,
-      avgReturn: count > 0 ? sum / count : 0
+      day: DAY_NAMES[day],
+      ...metrics,
     };
   });
 }
 
-export function calculateYearlySeasonality(data: HistoricalDataPoint[], yearsToInclude?: number[]): YearlySeasonality[] {
+export function calculateYearlySeasonality(data: HistoricalDataPoint[]): YearlySeasonality[] {
   if (!data || data.length === 0) return [];
 
-  const yearlySeries: Record<number, { date: string; cumulativeReturn: number }[]> = {};
-  let currentYear = -1;
-  let yearStartPrice = 0;
+  const yearlyData: Record<number, { start: number; end: number }> = {};
 
   for (let i = 0; i < data.length; i++) {
     const point = data[i];
     const date = new Date(point.date);
     const year = date.getFullYear();
 
-    if (yearsToInclude && yearsToInclude.length > 0 && !yearsToInclude.includes(year)) {
-      continue;
+    if (!yearlyData[year]) {
+      yearlyData[year] = { start: point.close, end: point.close };
     }
-
-    if (year !== currentYear) {
-      currentYear = year;
-      yearStartPrice = point.open || point.close;
-      if (!yearlySeries[year]) yearlySeries[year] = [];
-    }
-
-    const cumulativeReturn = ((point.close / yearStartPrice) - 1) * 100;
-    
-    // Normalize date to current year for overlapping chart, e.g. "01-15"
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    
-    yearlySeries[year].push({
-      date: `${month}-${day}`, // We chart by MM-DD
-      cumulativeReturn
-    });
+    yearlyData[year].end = point.close;
   }
 
-  return Object.keys(yearlySeries).map(y => ({
-    year: parseInt(y, 10),
-    data: yearlySeries[parseInt(y, 10)]
-  }));
+  return Object.keys(yearlyData).map(y => {
+    const year = parseInt(y, 10);
+    const val = yearlyData[year];
+    const ret = ((val.end - val.start) / val.start) * 100;
+    return {
+      year,
+      return: ret,
+    };
+  }).sort((a, b) => a.year - b.year);
 }

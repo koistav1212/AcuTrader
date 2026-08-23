@@ -36,7 +36,7 @@ export default function MarketScreener() {
   const { toggleWatchlist, watchlistSymbols, user } = useUser();
   const [toggling, setToggling] = useState<string | null>(null);
 
-  const handleToggle = async (e: React.MouseEvent, symbol: string) => {
+  const handleToggle = useCallback(async (e: React.MouseEvent, symbol: string) => {
     e.preventDefault();
     e.stopPropagation();
     if (!user) return;
@@ -47,7 +47,7 @@ export default function MarketScreener() {
     } finally {
       setToggling(null);
     }
-  };
+  }, [user, toggleWatchlist]);
 
   const deduplicate = (items: any[]) => {
     if (!Array.isArray(items)) return [];

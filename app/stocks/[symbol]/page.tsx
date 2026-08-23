@@ -7,43 +7,27 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Loader2, Plus, ArrowUpRight, ArrowDownRight, FileText, Download, Activity, Globe } from "lucide-react";
 import StockChart from "../../../components/charts/StockChart";
+import { useMarketSearch } from "@/app/hooks/useMarketSearch";
+import { useMarketQuote } from "@/app/hooks/useMarketQuote";
 
 export default function StockDetail() {
   const params = useParams();
   const symbol = params.symbol as string;
 
-  const [stockData, setStockData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: searchResults, isLoading: isSearchLoading } = useMarketSearch(symbol);
+  const { data: quoteData, isLoading: isQuoteLoading } = useMarketQuote(symbol);
 
-  useEffect(() => {
-    if (!symbol) return;
+  const loading = isSearchLoading || isQuoteLoading;
 
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://acutrader-backend.onrender.com/api";
-        const res = await fetch(`${baseUrl}/market/search?q=${symbol}`);
-        const data = await res.json();
-        
-        let stockItem = null;
-        if (data.Stocks && Array.isArray(data.Stocks)) {
-          stockItem = data.Stocks.find((item: any) => item.symbol === symbol || item.symbol === symbol.toUpperCase());
-          if (!stockItem && data.Stocks.length > 0) stockItem = data.Stocks[0];
-        } else if (Array.isArray(data)) {
-          stockItem = data.find((item: any) => item.symbol === symbol || item.symbol === symbol.toUpperCase());
-        }
-
-        if (stockItem) {
-          setStockData(stockItem);
-        }
-      } catch (e) {
-        console.error("Failed to fetch stock data", e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [symbol]);
+  let stockData = null;
+  if (searchResults && Array.isArray(searchResults)) {
+    stockData = searchResults.find((item: any) => item.symbol === symbol || item.symbol === symbol.toUpperCase());
+    if (!stockData && searchResults.length > 0) stockData = searchResults[0];
+  } else if (searchResults && (searchResults as any).Stocks && Array.isArray((searchResults as any).Stocks)) {
+    const stocks = (searchResults as any).Stocks;
+    stockData = stocks.find((item: any) => item.symbol === symbol || item.symbol === symbol.toUpperCase());
+    if (!stockData && stocks.length > 0) stockData = stocks[0];
+  }
 
   if (loading) {
     return (
@@ -64,14 +48,14 @@ export default function StockDetail() {
     );
   }
 
-  const s = stockData;
+  const s = { ...stockData, ...quoteData };
   const rawPrice = s.last_price ?? s.current_price ?? s.price ?? s.previous_close ?? 0;
   const currentPrice = typeof rawPrice === 'string' ? parseFloat(rawPrice.replace(/,/g, '')) : rawPrice;
   const change = typeof s.change === 'string' ? parseFloat(s.change.replace(/,/g, '')) : (s.change || 0);
-  const percentChange = typeof s.percent_change === 'string' ? parseFloat(s.percent_change.replace(/,/g, '')) : (s.percent_change || s.changesPercentage || 0);
+  const percentChange = typeof s.percent_change === 'string' ? parseFloat(s.percent_change.replace(/,/g, '')) : typeof s.changePercent === 'number' ? s.changePercent : (s.percent_change || s.changesPercentage || 0);
   const isUp = change >= 0;
   
-  const logoUrl = s.logo || s.image || `https://financialmodelingprep.com/image-stock/${s.symbol}.png`;
+  const logoUrl = s.logo || s.image || `https://financialmodelingprep.com/image-stock/${s.symbol || symbol}.png`;
 
   return (
     <div className="space-y-6 pb-20 max-w-[1400px] mx-auto w-full">

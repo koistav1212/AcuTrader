@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import React, { useRef, useEffect } from "react";
 
 import { CinematicScene } from "../components/CinematicScene";
 import { DepthLayer } from "../components/DepthLayer";
@@ -23,191 +21,7 @@ type BadgeProps = {
 };
 
 export function HeroScene() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
-    const ctx = gsap.context(() => {
-      const badges = gsap.utils.toArray<HTMLElement>(".noise-badge");
-
-      /* =========================================================
-         INITIAL POSITION
-
-         xPercent / yPercent preserve true centered positioning.
-         GSAP can now animate x/y without destroying CSS transforms.
-      ========================================================= */
-
-      gsap.set(badges, {
-        xPercent: -50,
-        yPercent: -50,
-        opacity: 0,
-        scale: 0.7,
-        y: 30,
-        filter: "blur(10px)",
-        transformPerspective: 1000,
-        force3D: true,
-      });
-
-      /* =========================================================
-         SEQUENTIAL CINEMATIC ENTRANCE
-      ========================================================= */
-
-      const intro = gsap.timeline({
-        delay: 0.25,
-      });
-
-      badges.forEach((badge, index) => {
-        const targetOpacity = Number(badge.dataset.opacity ?? 1);
-        const targetScale = Number(badge.dataset.scale ?? 1);
-        const targetBlur = Number(badge.dataset.blur ?? 0);
-
-        intro.to(
-          badge,
-          {
-            opacity: targetOpacity,
-            scale: targetScale,
-            y: 0,
-            filter: `blur(${targetBlur}px)`,
-            duration: 0.65,
-            ease: "back.out(1.4)",
-            force3D: true,
-          },
-          index * 0.5
-        );
-      });
-
-      /* =========================================================
-         FISH / SHARK MOUSE REACTION
-
-         Cursor = predator.
-
-         Nearby cards calculate distance from cursor.
-         The closer the cursor, the stronger they move away.
-
-         When cursor leaves:
-         Cards smoothly return to original position.
-      ========================================================= */
-
-      const REACTION_RADIUS = 280;
-      const MAX_FORCE = 100;
-
-      const moveBadges = (event: MouseEvent) => {
-        const container = containerRef.current;
-
-        if (!container) return;
-
-        const containerRect = container.getBoundingClientRect();
-
-        const mouseX = event.clientX - containerRect.left;
-        const mouseY = event.clientY - containerRect.top;
-
-        badges.forEach((badge) => {
-          const rect = badge.getBoundingClientRect();
-
-          const badgeX =
-            rect.left -
-            containerRect.left +
-            rect.width / 2;
-
-          const badgeY =
-            rect.top -
-            containerRect.top +
-            rect.height / 2;
-
-          const dx = badgeX - mouseX;
-          const dy = badgeY - mouseY;
-
-          const distance = Math.sqrt(
-            dx * dx + dy * dy
-          );
-
-          if (distance < REACTION_RADIUS) {
-            const strength =
-              1 - distance / REACTION_RADIUS;
-
-            const force =
-              strength * MAX_FORCE;
-
-            const safeDistance =
-              Math.max(distance, 1);
-
-            const moveX =
-              (dx / safeDistance) * force;
-
-            const moveY =
-              (dy / safeDistance) * force;
-
-            gsap.to(badge, {
-              x: moveX,
-              y: moveY,
-              scale: 1 + strength * 0.08,
-              rotation:
-                (moveX / MAX_FORCE) * 5,
-              duration: 0.28,
-              ease: "power3.out",
-              overwrite: "auto",
-            });
-          } else {
-            gsap.to(badge, {
-              x: 0,
-              y: 0,
-              scale: 1,
-              rotation: 0,
-              duration: 0.8,
-              ease: "elastic.out(1, 0.55)",
-              overwrite: "auto",
-            });
-          }
-        });
-      };
-
-      const resetBadges = () => {
-        badges.forEach((badge) => {
-          gsap.to(badge, {
-            x: 0,
-            y: 0,
-            scale: 1,
-            rotation: 0,
-            duration: 1,
-            ease: "elastic.out(1, 0.6)",
-            overwrite: "auto",
-          });
-        });
-      };
-
-      const container = containerRef.current;
-
-      container?.addEventListener(
-        "mousemove",
-        moveBadges
-      );
-
-      container?.addEventListener(
-        "mouseleave",
-        resetBadges
-      );
-
-      /* =========================================================
-         SCROLL EXIT
-         Removed by user request to keep badges visible 
-      ========================================================= */
-
-      return () => {
-        container?.removeEventListener(
-          "mousemove",
-          moveBadges
-        );
-
-        container?.removeEventListener(
-          "mouseleave",
-          resetBadges
-        );
-      };
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sceneRef = useRef<HTMLDivElement>(null);
 
   return (
     <CinematicScene
@@ -218,7 +32,7 @@ export function HeroScene() {
       fullBleedImage
     >
       <div
-        ref={containerRef}
+        ref={sceneRef}
         className="absolute inset-0 overflow-hidden"
         style={{
           perspective: "1800px",
@@ -278,18 +92,13 @@ export function HeroScene() {
           "
         >
           {/* BACKGROUND BADGES (Muted / Blurred) */}
-          <Badge x="24%" y="18%" text="WEATHER ALERT" opacity={0.45} blur={1.5} scale={0.88} variant="pill" accent="blue" />
-          <Badge x="61%" y="18%" text="SPORTS RESULTS" opacity={0.45} blur={1.5} scale={0.88} variant="pill" accent="purple" />
-          <Badge x="39%" y="34%" text="SECTOR ROTATION" opacity={0.45} blur={1.5} scale={0.88} variant="data" accent="blue" value="Energy" supporting="Outflows accelerating" />
           <Badge x="10%" y="58%" text="RATE DECISION" opacity={0.45} blur={1.5} scale={0.88} variant="data" accent="orange" value="4.75%" supporting="Unchanged" />
           <Badge x="22%" y="86%" text="MERGER RUMOR" opacity={0.45} blur={1.5} scale={0.88} variant="alert" accent="purple" value="Vol. +200%" supporting="Unconfirmed source" />
           <Badge x="85%" y="80%" text="OIL FUTURES" opacity={0.45} blur={1.5} scale={0.88} variant="pill" accent="purple" />
 
           {/* FOREGROUND BADGES (Vivid / Clear) */}
-          <Badge x="45%" y="25%" text="NVDA" opacity={1} blur={0} variant="pill" accent="green" value="+3.82%" />
           <Badge x="80%" y="20%" text="CEO INTERVIEW" opacity={1} blur={0} variant="alert" accent="orange" value="Live" supporting="Discussing Q3 guidance" />
           <Badge x="86%" y="30%" text="EARNINGS BEAT" opacity={1} blur={0} variant="alert" accent="green" value="+$0.15" supporting="Market reacted positively" />
-          <Badge x="12%" y="29%" text="AAPL +2.48%" opacity={1} blur={0} variant="pill" accent="green" />
           <Badge x="55%" y="39%" text="BREAKING NEWS" opacity={1} blur={0} variant="feature" accent="red" value="Market Risk" supporting="Major bank reports unexpected losses" />
           <Badge x="82%" y="64%" text="SOCIAL TREND" opacity={1} blur={0} variant="data" accent="purple" value="AI Surge" supporting="Trending globally" />
           <Badge x="92%" y="70%" text="RISK ON" opacity={1} blur={0} variant="pill" accent="green" />
@@ -408,12 +217,12 @@ function Badge({
       style={{
         left: x,
         top: y,
+        transform: `translate(-50%, -50%) scale(${scale})`,
+        opacity: opacity,
+        filter: blur > 0 ? `blur(${blur}px)` : 'none',
         background: theme.background,
         borderColor: theme.border,
         boxShadow: theme.glow,
-        filter: `blur(${blur}px)`,
-        transform: `scale(${scale}) translate(-50%, -50%)`,
-        opacity: opacity,
       }}
     >
       <div className="flex flex-col gap-1.5">

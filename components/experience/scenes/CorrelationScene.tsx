@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
+import React, { useRef } from "react";
 import { CinematicScene } from "../components/CinematicScene";
 import { DepthLayer } from "../components/DepthLayer";
 
@@ -72,155 +71,7 @@ const toneStyles: Record<
 };
 
 export function CorrelationScene() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const nodes = gsap.utils.toArray<HTMLElement>(
-        ".correlation-node"
-      );
-
-      const paths = gsap.utils.toArray<SVGPathElement>(
-        ".correlation-path"
-      );
-
-      const particles = gsap.utils.toArray<HTMLElement>(
-        ".correlation-particle"
-      );
-
-      const kpis = gsap.utils.toArray<HTMLElement>(
-        ".correlation-kpi"
-      );
-
-      /* -----------------------------------------------
-         INITIAL STATE
-      ------------------------------------------------ */
-
-      gsap.set(nodes, {
-        opacity: 0,
-        scale: 0.65,
-        filter: "blur(8px)",
-      });
-
-      gsap.set(kpis, {
-        opacity: 0,
-        y: 25,
-        filter: "blur(8px)",
-      });
-
-      paths.forEach((path) => {
-        const length = path.getTotalLength();
-
-        gsap.set(path, {
-          strokeDasharray: length,
-          strokeDashoffset: length,
-        });
-      });
-
-      /* -----------------------------------------------
-         NODE ENTRANCE
-      ------------------------------------------------ */
-
-      gsap.to(nodes, {
-        opacity: 1,
-        scale: 1,
-        filter: "blur(0px)",
-        stagger: 0.1,
-        ease: "back.out(1.6)",
-
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 70%",
-          end: "top 25%",
-          scrub: 1,
-        },
-      });
-
-      /* -----------------------------------------------
-         KPI ENTRANCE
-      ------------------------------------------------ */
-
-      gsap.to(kpis, {
-        opacity: 1,
-        y: 0,
-        filter: "blur(0px)",
-        stagger: 0.08,
-        ease: "power3.out",
-
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 62%",
-          end: "top 30%",
-          scrub: 1,
-        },
-      });
-
-      /* -----------------------------------------------
-         CONNECTION DRAWING
-      ------------------------------------------------ */
-
-      paths.forEach((path, index) => {
-        gsap.to(path, {
-          strokeDashoffset: 0,
-
-          ease: "power2.out",
-
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: `top ${55 - index * 3}%`,
-            end: "center center",
-            scrub: 1,
-          },
-        });
-      });
-
-      /* -----------------------------------------------
-         FLOATING PARTICLES
-      ------------------------------------------------ */
-
-      particles.forEach((particle, index) => {
-        gsap.to(particle, {
-          x: `${(index % 2 === 0 ? 1 : -1) * (15 + index * 4)}`,
-          y: `${index % 2 === 0 ? -18 : 18}`,
-          duration: 2.5 + index * 0.35,
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-        });
-      });
-
-      /* -----------------------------------------------
-         INDIVIDUAL NODE FLOATING MOTION
-      ------------------------------------------------ */
-
-      nodes.forEach((node, index) => {
-        if (node.classList.contains("target-node")) return;
-
-        gsap.to(node, {
-          y: index % 2 === 0 ? -10 : 10,
-          x: index % 3 === 0 ? 5 : -4,
-          duration: 3.5 + index * 0.3,
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-        });
-      });
-
-      /* -----------------------------------------------
-         TARGET PULSE
-      ------------------------------------------------ */
-
-      gsap.to(".target-ring", {
-        scale: 1.25,
-        opacity: 0,
-        duration: 2.2,
-        repeat: -1,
-        ease: "power2.out",
-      });
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sceneRef = useRef<HTMLDivElement>(null);
 
   return (
     <CinematicScene
@@ -230,8 +81,8 @@ export function CorrelationScene() {
       title="CORRELATION DETECTION."
     >
       <div
-        ref={containerRef}
-        className="absolute inset-0 overflow-hidden"
+        ref={sceneRef}
+        className="absolute inset-0 overflow-hidden w-full h-full"
       >
         {/* =====================================================
             BACKGROUND DATA CONTEXT

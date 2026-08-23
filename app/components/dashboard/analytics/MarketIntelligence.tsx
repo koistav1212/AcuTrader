@@ -3,7 +3,11 @@
 import React from "react";
 import { ArrowUpRight, ArrowDownRight, ArrowRight } from "lucide-react";
 
-export function MarketIntelligence() {
+interface MarketIntelligenceProps {
+  activeSymbol?: string;
+}
+
+export function MarketIntelligence({ activeSymbol }: MarketIntelligenceProps) {
   return (
     <div className="flex flex-col h-full border border-[var(--border)] bg-[var(--surface)] rounded-md shadow-sm overflow-hidden p-6">
       <div className="mb-4 border-b border-[var(--border)] pb-4 flex justify-between items-center">
@@ -13,7 +17,7 @@ export function MarketIntelligence() {
       
       <div className="flex flex-col flex-1">
         <div className="mb-6">
-           <span className="font-mono text-[10px] tracking-widest text-[var(--text-muted)] uppercase block mb-1">Overall Signal</span>
+           <span className="font-mono text-[10px] tracking-widest text-[var(--text-muted)] uppercase block mb-1">Overall Signal for {activeSymbol || 'Market'}</span>
            <div className="flex items-end gap-3">
              <span className="font-sans text-[28px] font-bold text-[var(--positive)] leading-none">BULLISH</span>
              <span className="font-mono text-[13px] font-bold text-[var(--text-secondary)] mb-1">82% Confidence</span>

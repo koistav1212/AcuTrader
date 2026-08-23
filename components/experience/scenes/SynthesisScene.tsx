@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
+import React, { useRef } from "react";
 import { CinematicScene } from "../components/CinematicScene";
 
 type Tone = "blue" | "purple" | "green" | "orange" | "red";
@@ -126,207 +125,7 @@ const SIGNALS = [
 ];
 
 export function SynthesisScene() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray<HTMLElement>(".signal-card");
-      const lines = gsap.utils.toArray<SVGPathElement>(".signal-line");
-      const dots = gsap.utils.toArray<HTMLElement>(".signal-dot");
-
-      /* -------------------------------------------------------
-         INITIAL STATES
-      ------------------------------------------------------- */
-
-      gsap.set(cards, {
-        opacity: 0,
-        scale: 0.75,
-        filter: "blur(10px)",
-      });
-
-      gsap.set(".synthesis-core", {
-        opacity: 0,
-        scale: 0.55,
-        filter: "blur(10px)",
-      });
-
-      gsap.set(dots, {
-        scale: 0,
-        opacity: 0,
-      });
-
-      /* -------------------------------------------------------
-         SVG LINE DRAWING
-      ------------------------------------------------------- */
-
-      lines.forEach((line) => {
-        const length = line.getTotalLength();
-
-        gsap.set(line, {
-          strokeDasharray: length,
-          strokeDashoffset: length,
-          opacity: 0,
-        });
-
-        gsap.to(line, {
-          strokeDashoffset: 0,
-          opacity: 0.7,
-          ease: "power2.out",
-
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 75%",
-            end: "center center",
-            scrub: 1,
-          },
-        });
-      });
-
-      /* -------------------------------------------------------
-         SIGNAL CARD REVEAL
-      ------------------------------------------------------- */
-
-      cards.forEach((card, index) => {
-        const side =
-          index % 2 === 0 ? -1 : 1;
-
-        gsap.fromTo(
-          card,
-          {
-            x: side * 90,
-            y: 45,
-            rotateZ: side * 3,
-            opacity: 0,
-            scale: 0.75,
-            filter: "blur(10px)",
-          },
-          {
-            x: 0,
-            y: 0,
-            rotateZ: 0,
-            opacity: 1,
-            scale: 1,
-            filter: "blur(0px)",
-            ease: "power3.out",
-
-            scrollTrigger: {
-              trigger: containerRef.current,
-              start: "top 75%",
-              end: "center center",
-              scrub: 1,
-            },
-          }
-        );
-      });
-
-      /* -------------------------------------------------------
-         CORE REVEAL
-      ------------------------------------------------------- */
-
-      gsap.to(".synthesis-core", {
-        opacity: 1,
-        scale: 1,
-        filter: "blur(0px)",
-
-        ease: "back.out(1.4)",
-
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 62%",
-          end: "center center",
-          scrub: 1,
-        },
-      });
-
-      /* -------------------------------------------------------
-         CONNECTION DOTS
-      ------------------------------------------------------- */
-
-      gsap.to(dots, {
-        scale: 1,
-        opacity: 1,
-        stagger: 0.08,
-
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 58%",
-          end: "center center",
-          scrub: 1,
-        },
-      });
-
-      /* -------------------------------------------------------
-         SUBTLE FLOATING MOTION
-      ------------------------------------------------------- */
-
-      cards.forEach((card, index) => {
-        gsap.to(card, {
-          y: index % 2 === 0 ? -9 : 9,
-          duration: 2.5 + index * 0.3,
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-          delay: index * 0.15,
-        });
-      });
-
-      /* -------------------------------------------------------
-         PARALLAX
-      ------------------------------------------------------- */
-
-      const onMove = (event: MouseEvent) => {
-        if (!containerRef.current) return;
-
-        const rect =
-          containerRef.current.getBoundingClientRect();
-
-        const x =
-          (event.clientX - rect.left) / rect.width - 0.5;
-
-        const y =
-          (event.clientY - rect.top) / rect.height - 0.5;
-
-        cards.forEach((card) => {
-          const depth =
-            Number(card.dataset.depth || 1);
-
-          gsap.to(card, {
-            x: x * depth * 18,
-            y: y * depth * 14,
-            duration: 1.2,
-            ease: "power3.out",
-          });
-        });
-
-        gsap.to(".synthesis-core", {
-          x: x * 10,
-          y: y * 8,
-          duration: 1.3,
-          ease: "power3.out",
-        });
-
-        gsap.to(".network-layer", {
-          x: x * -7,
-          y: y * -5,
-          duration: 1.5,
-          ease: "power3.out",
-        });
-      };
-
-      const element = containerRef.current;
-
-      element?.addEventListener("mousemove", onMove);
-
-      return () => {
-        element?.removeEventListener(
-          "mousemove",
-          onMove
-        );
-      };
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sceneRef = useRef<HTMLDivElement>(null);
 
   return (
     <CinematicScene
@@ -336,8 +135,8 @@ export function SynthesisScene() {
       title="MULTIPLE SIGNALS. ONE MARKET THESIS."
     >
       <div
-        ref={containerRef}
-        className="absolute inset-0 overflow-hidden"
+        ref={sceneRef}
+        className="absolute inset-0 overflow-hidden w-full h-full"
         style={{
           perspective: "1800px",
         }}

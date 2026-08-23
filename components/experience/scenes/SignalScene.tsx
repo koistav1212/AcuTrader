@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import React, { useRef } from "react";
 import { CinematicScene } from "../components/CinematicScene";
 
 type CardColor =
@@ -228,86 +226,7 @@ function DataCard({
 }
 
 export function SignalScene() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      const leftCards = gsap.utils.toArray(".left-card");
-      const rightCards = gsap.utils.toArray(".right-card");
-
-      gsap.set(leftCards, {
-        opacity: 0,
-        x: -70,
-      });
-
-      gsap.set(rightCards, {
-        opacity: 0,
-        x: 70,
-      });
-
-      gsap.to(leftCards, {
-        opacity: 1,
-        x: 0,
-        stagger: 0.18,
-        duration: 1,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 75%",
-        },
-      });
-
-      gsap.to(rightCards, {
-        opacity: 1,
-        x: 0,
-        stagger: 0.18,
-        duration: 1,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 75%",
-        },
-      });
-
-      gsap.set(".flow-container", { opacity: 0 });
-      gsap.to(".flow-container", {
-        opacity: 1,
-        duration: 1,
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 75%",
-        },
-      });
-
-      const flowPaths = gsap.utils.toArray<SVGPathElement>(".data-flow");
-      flowPaths.forEach((path) => {
-        const length = path.getTotalLength();
-        gsap.set(path, {
-          strokeDasharray: length,
-          strokeDashoffset: length,
-        });
-        gsap.to(path, {
-          strokeDashoffset: 0,
-          duration: 2.2,
-          ease: "power2.inOut",
-          repeat: -1,
-          repeatDelay: 0.4,
-        });
-      });
-
-      gsap.to(".ai-core", {
-        scale: 1.04,
-        duration: 2,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-      });
-
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sceneRef = useRef<HTMLDivElement>(null);
 
   return (
     <CinematicScene
@@ -318,8 +237,8 @@ export function SignalScene() {
       id="scene-1"
     >
       <div
-        ref={containerRef}
-        className="absolute inset-0 z-10"
+        ref={sceneRef}
+        className="absolute inset-0 z-10 w-full h-full"
       >
 
         {/* LEFT HEADING */}

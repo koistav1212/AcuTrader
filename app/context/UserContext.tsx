@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { portfolioApi } from '../lib/api/portfolio';
 
 // Define types based on the user's requirements/external API
 interface User {
@@ -66,10 +67,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
-
-
-
   // Update set of symbols whenever watchlist changes
   useEffect(() => {
     const symbols = new Set(watchlist.map(item => item.symbol));
@@ -87,47 +84,31 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const fetchUserData = useCallback(async (token: string) => {
     setLoading(true);
     try {
-        const headers = getHeaders(token);
-        
-        // Fetch all data in parallel
         const [portfolioRes, watchlistRes, transactionsRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/user/portfolio`, { headers }),
-            fetch(`${API_BASE_URL}/user/watchlist`, { headers }),
-            fetch(`${API_BASE_URL}/user/transactions`, { headers })
+            portfolioApi.getPortfolio(),
+            portfolioApi.getWatchlist(),
+            portfolioApi.getTransactions()
         ]);
 
-        if (portfolioRes.ok) {
-            const portfolioData = await portfolioRes.json();
-            // Assuming portfolioData has structure { holdings: [], ... } based on typical API
-            // Or if it returns just the array (based on user request description 'Portfolio data')
-            // Adjust based on actual API response. Let's assume it returns { holdings: [...] } or just [...]
-            // The previous code had `return NextResponse.json({ holdings, totalInvested })`
-            if (portfolioData.holdings) {
-                 setHoldings(portfolioData.holdings);
-            } else if (Array.isArray(portfolioData)) {
-                 setHoldings(portfolioData); // If it's just an array of holdings
-            }
+        const portfolioData = portfolioRes.data || portfolioRes;
+        if (portfolioData.holdings) {
+             setHoldings(portfolioData.holdings);
+        } else if (Array.isArray(portfolioData)) {
+             setHoldings(portfolioData); 
         }
 
-        if (watchlistRes.ok) {
-            const watchlistData = await watchlistRes.json();
-            // Assuming simplified response or array of objects
-            setWatchlist(Array.isArray(watchlistData) ? watchlistData : []);
-        }
+        const watchlistData = watchlistRes.data || watchlistRes;
+        setWatchlist(Array.isArray(watchlistData) ? watchlistData : []);
 
-        if (transactionsRes.ok) {
-            const transactionsData = await transactionsRes.json();
-            setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
-        }
+        const transactionsData = transactionsRes.data || transactionsRes;
+        setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
 
     } catch (err: any) {
         console.error("Error fetching user data:", err);
-        // Don't set global error here to avoid blocking UI, just log it
-        // OR setError("Failed to load user data");
     } finally {
         setLoading(false);
     }
-  }, [API_BASE_URL]);
+  }, []);
 
   const login = useCallback((token: string, userData: User) => {
     localStorage.setItem('token', token);
@@ -148,48 +129,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const toggleWatchlist = async (symbol: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/user/watchlist/toggle`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ symbol }),
-      });
-
-      if (!res.ok) throw new Error('Failed to toggle watchlist');
-
-      const data = await res.json();
+      await portfolioApi.toggleWatchlist(symbol);
       
-      // Optimistic update or re-fetch
-      // If the API returns the new state (added: boolean), we can update local state
-      // But re-fetching is safer to sync
-      
-      // Let's do optimistic update for instant feedback if we know the logic
       if (watchlistSymbols.has(symbol)) {
           setWatchlist(prev => prev.filter(i => i.symbol !== symbol));
       } else {
-          setWatchlist(prev => [...prev, { symbol }]); // Mock basic item
+          setWatchlist(prev => [...prev, { symbol }]); 
       }
 
-      await fetch(`${API_BASE_URL}/user/watchlist`, { headers: getHeaders() })
-        .then(r => r.json())
-        .then(d => setWatchlist(d));
+      const d = await portfolioApi.getWatchlist();
+      setWatchlist(d.data || d);
 
     } catch (err) {
       console.error(err);
-      // Revert if needed, or just show toast
     }
   };
 
   const buyStock = async (symbol: string, quantity: number, price: number) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/user/buy`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ symbol, quantity, price }),
-      });
-
-      if (!res.ok) throw new Error('Buy failed');
-
-      // Refresh data to reflect new holdings/transactions
+      await portfolioApi.trade({ symbol, quantity, action: 'BUY', price });
       await refreshData();
     } catch (err) {
       console.error(err);
@@ -199,14 +157,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const sellStock = async (symbol: string, quantity: number, price: number) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/user/sell`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ symbol, quantity, price }),
-      });
-
-      if (!res.ok) throw new Error('Sell failed');
-
+      await portfolioApi.trade({ symbol, quantity, action: 'SELL', price });
       await refreshData();
     } catch (err) {
       console.error(err);

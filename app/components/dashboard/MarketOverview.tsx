@@ -12,7 +12,13 @@ const PriceChart = dynamic(() => import("@/components/charts/PriceChart"), {
   ),
 });
 
-export default function MarketOverview() {
+import { useHistoricalData } from "@/app/hooks/useHistoricalData";
+
+interface MarketOverviewProps {
+  activeSymbol: string;
+}
+
+export default function MarketOverview({ activeSymbol }: MarketOverviewProps) {
   const [activeTab, setActiveTab] = useState("Price");
   const [timeframe, setTimeframe] = useState("1M");
 
@@ -25,11 +31,67 @@ export default function MarketOverview() {
 
   const timeframes = ["1D", "5D", "1M", "3M", "6M", "1Y"];
 
-  // Mock data for the chart
-  const mockChartData = Array.from({ length: 30 }).map((_, i) => ({
-    time: `2024-05-${(i + 1).toString().padStart(2, "0")}`,
-    value: 5000 + Math.random() * 500 + i * 10,
-  }));
+  const { data: historicalData, isLoading: isHistoryLoading } = useHistoricalData(activeSymbol, timeframe, "1d");
+
+  const chartData = React.useMemo(() => {
+    if (!historicalData || historicalData.length === 0) return [];
+    
+    if (activeTab === "Price") {
+      return historicalData.map((d: any) => ({
+        time: d.date,
+        value: d.close || d.price || d.value,
+      }));
+    }
+    
+    if (activeTab === "Volume") {
+      return historicalData.map((d: any) => ({
+        time: d.date,
+        value: d.volume || 0,
+      }));
+    }
+
+    if (activeTab === "Momentum") {
+      // 20-period Rate of Change
+      const result = [];
+      for (let i = 0; i < historicalData.length; i++) {
+        if (i < 20) continue; // Need 20 periods
+        const currentClose = historicalData[i].close;
+        const pastClose = historicalData[i - 20].close;
+        const roc = pastClose ? ((currentClose - pastClose) / pastClose) * 100 : 0;
+        result.push({
+          time: historicalData[i].date,
+          value: roc,
+        });
+      }
+      return result;
+    }
+
+    if (activeTab === "Volatility") {
+      // 20-period annualized standard deviation of returns
+      const result = [];
+      const returns: number[] = [];
+      for (let i = 1; i < historicalData.length; i++) {
+        const current = historicalData[i].close;
+        const prev = historicalData[i - 1].close;
+        returns.push((current - prev) / prev);
+
+        if (returns.length >= 20) {
+          const window = returns.slice(-20);
+          const mean = window.reduce((a, b) => a + b, 0) / window.length;
+          const variance = window.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / window.length;
+          const stdDev = Math.sqrt(variance);
+          const annualized = stdDev * Math.sqrt(252) * 100; // as percentage
+          result.push({
+            time: historicalData[i].date,
+            value: annualized,
+          });
+        }
+      }
+      return result;
+    }
+
+    return [];
+  }, [historicalData, activeTab]);
 
   return (
     <div className="flex flex-col h-full space-y-6">
@@ -72,8 +134,13 @@ export default function MarketOverview() {
       </div>
 
       {/* Main Chart Area */}
-      <div className="flex-1 min-h-[450px] w-full">
-        <PriceChart data={mockChartData} color="#2563eb" />
+      <div className="flex-1 min-h-[450px] w-full relative">
+        {isHistoryLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-solid)]/50 z-10">
+            <div className="animate-pulse flex items-center text-[var(--text-secondary)]">Loading chart...</div>
+          </div>
+        )}
+        <PriceChart data={chartData} color="#2563eb" />
       </div>
 
       {/* Market Breadth & Sectors */}

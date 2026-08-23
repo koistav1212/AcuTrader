@@ -4,6 +4,7 @@ import "./globals.css";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "./context/ThemeContext";
 import { UserProvider, useUser } from "./context/UserContext"; // Import UserProvider
+import { Providers } from "./providers";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { DesktopNavbar } from "./components/layout/DekstopNavBar";
 import { MobileBottomBar } from "./components/layout/MobileBottomBar";
@@ -47,13 +48,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans bg-[var(--bg-primary)] text-[var(--text-primary)]" suppressHydrationWarning>
-        <ThemeProvider>
-          <UserProvider>
-            <LayoutContent isAuthPage={isAuthPage}>
-              {children}
-            </LayoutContent>
-          </UserProvider>
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider>
+            <UserProvider>
+              <LayoutContent isAuthPage={isAuthPage}>
+                {children}
+              </LayoutContent>
+            </UserProvider>
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

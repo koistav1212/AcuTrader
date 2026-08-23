@@ -1,40 +1,36 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { MonthlySeasonality } from "@/utils/seasonality";
+import { MonthlySeasonality, WeeklySeasonality } from "@/utils/seasonality";
 import { cn } from "@/app/lib/utils";
 
 interface SeasonalityInsightsProps {
+  symbol: string;
   monthlyData: MonthlySeasonality[];
+  weeklyData: WeeklySeasonality[];
 }
 
-export function SeasonalityInsights({ monthlyData }: SeasonalityInsightsProps) {
+export function SeasonalityInsights({ symbol, monthlyData, weeklyData }: SeasonalityInsightsProps) {
   const insights = useMemo(() => {
-    if (!monthlyData || monthlyData.length === 0) return null;
+    if (!monthlyData || monthlyData.length === 0 || !weeklyData || weeklyData.length === 0) return null;
 
     let bestMonth = monthlyData[0];
     let worstMonth = monthlyData[0];
-    let positiveMonthsCount = 0;
+    let highestWinRateMonth = monthlyData[0];
 
     monthlyData.forEach((m) => {
-      if (m.avgReturn > bestMonth.avgReturn) bestMonth = m;
-      if (m.avgReturn < worstMonth.avgReturn) worstMonth = m;
-      if (m.avgReturn > 0) positiveMonthsCount++;
+      if (m.averageReturn > bestMonth.averageReturn) bestMonth = m;
+      if (m.averageReturn < worstMonth.averageReturn) worstMonth = m;
+      if (m.positiveFrequency > highestWinRateMonth.positiveFrequency) highestWinRateMonth = m;
     });
 
-    const hitRate = (positiveMonthsCount / 12) * 100;
+    let bestDay = weeklyData[0];
+    weeklyData.forEach((w) => {
+      if (w.positiveFrequency > bestDay.positiveFrequency) bestDay = w;
+    });
 
-    // Simple heuristic for confidence
-    const confidence = Math.min(100, Math.max(0, 50 + (hitRate - 50) + (bestMonth.avgReturn * 2) - (Math.abs(worstMonth.avgReturn) * 2)));
-
-    // Simple heuristic for signal
-    let signalText = "Neutral Outlook";
-    if (confidence > 75) signalText = "Strong Bullish Bias";
-    else if (confidence > 60) signalText = "Bullish Bias into Q4";
-    else if (confidence < 40) signalText = "Bearish Seasonal Drag";
-
-    return { bestMonth, worstMonth, positiveMonthsCount, hitRate, confidence, signalText };
-  }, [monthlyData]);
+    return { bestMonth, worstMonth, highestWinRateMonth, bestDay };
+  }, [monthlyData, weeklyData]);
 
   if (!insights) return null;
 
@@ -44,61 +40,36 @@ export function SeasonalityInsights({ monthlyData }: SeasonalityInsightsProps) {
         SEASONALITY INSIGHTS
       </p>
 
-      <div className="space-y-5">
+      <div className="space-y-6">
         <InsightBlock 
-          label="BEST MONTH" 
-          value={insights.bestMonth.monthName} 
-          subValue={`+${insights.bestMonth.avgReturn.toFixed(1)}% avg return`} 
-          isPositive={true}
+          label="BEST HISTORICAL MONTH" 
+          text={`${insights.bestMonth.month} has historically delivered the highest average return for ${symbol} at ${insights.bestMonth.averageReturn.toFixed(2)}%.`}
         />
         
         <InsightBlock 
-          label="WORST MONTH" 
-          value={insights.worstMonth.monthName} 
-          subValue={`${insights.worstMonth.avgReturn.toFixed(1)}% avg return`} 
-          isPositive={false}
+          label="WORST HISTORICAL MONTH" 
+          text={`${insights.worstMonth.month} has historically been the weakest month for ${symbol} with an average return of ${insights.worstMonth.averageReturn.toFixed(2)}%.`} 
         />
 
         <InsightBlock 
-          label="POSITIVE MONTHS" 
-          value={`${insights.positiveMonthsCount} / 12`} 
-          subValue={`${insights.hitRate.toFixed(1)}% hit rate`} 
-          isPositive={insights.hitRate > 50}
+          label="CONSISTENCY" 
+          text={`${symbol} has closed ${insights.highestWinRateMonth.month} positively in ${insights.highestWinRateMonth.positiveFrequency.toFixed(0)}% of observed years.`} 
         />
 
         <InsightBlock 
-          label="SEASONAL CONFIDENCE" 
-          value={`${insights.confidence.toFixed(0)}%`} 
-          subValue="Based on historical consistency" 
+          label="BEST TRADING DAY" 
+          text={`${insights.bestDay.day} has the highest historical positive-return frequency for ${symbol} at ${insights.bestDay.positiveFrequency.toFixed(0)}%.`} 
         />
-      </div>
-
-      <div className="mt-auto pt-5 border-t border-[var(--border)]">
-        <p className="font-mono text-[10px] tracking-widest uppercase text-[var(--text-muted)] mb-2">
-          SEASONAL SIGNAL
-        </p>
-        <p className={cn(
-          "font-sans text-[15px] font-bold",
-          insights.confidence > 60 ? "text-[var(--positive)]" : insights.confidence < 40 ? "text-[var(--negative)]" : "text-[var(--text-primary)]"
-        )}>
-          {insights.signalText}
-        </p>
       </div>
     </div>
   );
 }
 
-function InsightBlock({ label, value, subValue, isPositive }: { label: string; value: string; subValue: string; isPositive?: boolean }) {
+function InsightBlock({ label, text }: { label: string; text: string }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <span className="font-mono text-[10px] tracking-widest text-[var(--text-muted)] uppercase">{label}</span>
-      <span className="font-sans text-[16px] font-bold text-[var(--text-primary)]">{value}</span>
-      <span className={cn(
-        "font-mono text-[12px]",
-        isPositive === true ? "text-[var(--positive)]" : isPositive === false ? "text-[var(--negative)]" : "text-[var(--text-secondary)]"
-      )}>
-        {subValue}
-      </span>
+      <span className="font-sans text-[14px] leading-relaxed text-[var(--text-primary)]">{text}</span>
     </div>
   );
 }

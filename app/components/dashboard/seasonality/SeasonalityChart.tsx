@@ -85,14 +85,14 @@ function _SeasonalityChart({ mode, monthlyData, weeklyData, yearlyData }: Season
         },
         xAxis: {
           ...BaseChartOptions.xAxis,
-          data: monthlyData.map(d => d.monthName),
+          data: monthlyData.map(d => d.month),
         },
         series: [
           {
             type: "bar",
             data: monthlyData.map(d => ({
-              value: d.avgReturn,
-              itemStyle: { color: d.avgReturn >= 0 ? positiveColor : negativeColor }
+              value: d.averageReturn,
+              itemStyle: { color: d.averageReturn >= 0 ? positiveColor : negativeColor }
             })),
             barMaxWidth: 40,
             itemStyle: {
@@ -112,38 +112,25 @@ function _SeasonalityChart({ mode, monthlyData, weeklyData, yearlyData }: Season
             const p = params[0];
             const val = p.value;
             return `
-              <div style="font-weight:bold; margin-bottom: 4px;">Week ${p.name}</div>
+              <div style="font-weight:bold; margin-bottom: 4px;">${p.name}</div>
               <div>Avg Return: <b>${val > 0 ? '+' : ''}${val.toFixed(2)}%</b></div>
             `;
           }
         },
         xAxis: {
           ...BaseChartOptions.xAxis,
-          data: weeklyData.map(d => d.week.toString()),
-          axisLabel: {
-            ...BaseChartOptions.xAxis.axisLabel,
-            interval: 3, // Show every 4th week to avoid clutter
-          }
+          data: weeklyData.map(d => d.day),
         },
         series: [
           {
-            type: "line",
-            data: weeklyData.map(d => d.avgReturn),
-            smooth: true,
-            showSymbol: false,
-            lineStyle: {
-              color: "#3b82f6", // var(--info)
-              width: 2,
-            },
-            areaStyle: {
-              color: {
-                type: "linear",
-                x: 0, y: 0, x2: 0, y2: 1,
-                colorStops: [
-                  { offset: 0, color: "rgba(59, 130, 246, 0.3)" },
-                  { offset: 1, color: "rgba(59, 130, 246, 0)" },
-                ],
-              },
+            type: "bar",
+            data: weeklyData.map(d => ({
+              value: d.averageReturn,
+              itemStyle: { color: d.averageReturn >= 0 ? "#63b38d" : "#bd6666" }
+            })),
+            barMaxWidth: 40,
+            itemStyle: {
+              borderRadius: [2, 2, 0, 0],
             },
           },
         ],
@@ -151,61 +138,43 @@ function _SeasonalityChart({ mode, monthlyData, weeklyData, yearlyData }: Season
     }
 
     if (mode === "Yearly") {
-      const colors = ["#8a6fc1", "#eab308", "#22c55e", "#f97316", "#3b82f6"]; // terminal colors
-      const series = yearlyData.map((yd, idx) => {
-        const isLatest = idx === yearlyData.length - 1;
-        return {
-          name: yd.year.toString(),
-          type: "line",
-          data: yd.data.map(d => [d.date, d.cumulativeReturn]),
-          smooth: true,
-          showSymbol: false,
-          lineStyle: {
-            color: colors[idx % colors.length],
-            width: isLatest ? 3 : 1.5,
-            opacity: isLatest ? 1 : 0.6,
-          },
-          endLabel: {
-            show: true,
-            formatter: "{a}",
-            color: colors[idx % colors.length],
-            fontSize: 12,
-            distance: 8,
-            fontFamily: "var(--font-ibm-plex-mono)",
-            fontWeight: isLatest ? "bold" : "normal"
-          }
-        };
-      });
+      const positiveColor = "#63b38d";
+      const negativeColor = "#bd6666";
 
       return {
         ...BaseChartOptions,
         tooltip: {
           ...BaseChartOptions.tooltip,
-          trigger: "item",
           formatter: (params: any) => {
-            const val = params.value[1];
+            const p = params[0];
+            const val = p.value;
+            const color = val >= 0 ? positiveColor : negativeColor;
             return `
-              <div style="font-weight:bold; margin-bottom: 4px;">${params.seriesName}</div>
-              <div>${params.value[0]}: <b>${val > 0 ? '+' : ''}${val.toFixed(2)}%</b></div>
+              <div style="font-weight:bold; margin-bottom: 4px;">${p.name}</div>
+              <div style="display:flex; align-items:center; gap: 6px;">
+                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${color};"></span>
+                <span>Annual Return: <b style="color:${color}">${val > 0 ? '+' : ''}${val.toFixed(2)}%</b></span>
+              </div>
             `;
           }
         },
         xAxis: {
           ...BaseChartOptions.xAxis,
-          type: "category",
-          axisLabel: {
-            ...BaseChartOptions.xAxis.axisLabel,
-            formatter: (value: string) => {
-              const [m, d] = value.split("-");
-              if (d === "01") {
-                const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-                return months[parseInt(m)-1];
-              }
-              return "";
-            }
-          }
+          data: yearlyData.map(d => d.year.toString()),
         },
-        series,
+        series: [
+          {
+            type: "bar",
+            data: yearlyData.map(d => ({
+              value: d.return,
+              itemStyle: { color: d.return >= 0 ? positiveColor : negativeColor }
+            })),
+            barMaxWidth: 40,
+            itemStyle: {
+              borderRadius: [2, 2, 0, 0],
+            },
+          },
+        ],
       };
     }
 

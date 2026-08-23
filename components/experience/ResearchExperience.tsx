@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import React, { useState, useRef, useEffect } from "react";
 import { VerticalNav } from "./components/VerticalNav";
 import { ResearchProgress } from "./components/ResearchProgress";
 import { OpenPlatformButton } from "@/components/auth/OpenPlatformButton";
@@ -19,31 +17,10 @@ export function ResearchExperience() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentSection, setCurrentSection] = useState(1);
 
+  // ScrollTrigger temporarily removed for pure CSS rendering test.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      gsap.registerPlugin(ScrollTrigger);
-    }
-
-    const ctx = gsap.context(() => {
-      const sceneElements = gsap.utils.toArray<HTMLElement>(".scene-section");
-
-      sceneElements.forEach((scene, i) => {
-        ScrollTrigger.create({
-          trigger: scene,
-          start: "top center",
-          end: "bottom center",
-          onEnter: () => setCurrentSection(i + 1),
-          onEnterBack: () => setCurrentSection(i + 1),
-        });
-      });
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => ScrollTrigger.refresh());
-    return () => cancelAnimationFrame(id);
+    // We could implement an IntersectionObserver here later if needed,
+    // but for now, we just let it sit at section 1.
   }, []);
 
   return (

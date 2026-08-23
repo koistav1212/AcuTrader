@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
+import React, { useRef } from "react";
 import { CinematicScene } from "../components/CinematicScene";
 import { DataCard } from "../components/DataCard";
 
@@ -67,23 +66,25 @@ function MeasureCard({
   tone = "blue",
   className = "",
   depth = "forward",
+  removeBacking = false,
 }: {
   children: React.ReactNode;
   tone?: CardTone;
   className?: string;
   depth?: "forward" | "back" | "primary" | "deepest";
+  removeBacking?: boolean;
 }) {
   const style = colorStyles[tone];
 
   return (
     <DataCard
-      cardClassName={`measure-card parallax-card ${className}`}
+      cardClassName={`measure-card parallax-card`}
       depth={depth}
-      className="
+      className={`
         relative
         flex
         h-[180px]
-        w-[220px]
+        ${className || 'w-[220px]'}
         flex-col
         overflow-hidden
         rounded-[18px]
@@ -93,10 +94,10 @@ function MeasureCard({
         
         transition-shadow
         duration-500
-      "
+      `}
       style={{
         borderColor: style.border,
-        background: `
+        background: removeBacking ? "transparent" : `
           linear-gradient(
             135deg,
             rgba(8,12,20,0.88),
@@ -253,146 +254,7 @@ function LiveLine({
 ============================================================ */
 
 export function MeasurementScene() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray<HTMLElement>(".measure-card");
-      const numbers =
-        gsap.utils.toArray<HTMLElement>(".animated-number");
-
-      /* --------------------------------------------------------
-         CINEMATIC ENTRANCE
-      -------------------------------------------------------- */
-
-      gsap.set(cards, {
-        opacity: 0,
-        scale: 0.82,
-        y: 60,
-        filter: "blur(14px)",
-      });
-
-      gsap.to(cards, {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        filter: "blur(0px)",
-        duration: 1.2,
-        stagger: 0.1,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 80%",
-          end: "top 30%",
-          scrub: 1,
-        },
-      });
-
-      /* --------------------------------------------------------
-         FLOATING IDLE MOTION
-      -------------------------------------------------------- */
-
-      cards.forEach((card, index) => {
-        gsap.to(card, {
-          y: index % 2 === 0 ? -8 : 8,
-          duration: 3 + (index % 3) * 0.7,
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-          delay: index * 0.18,
-        });
-      });
-
-      /* --------------------------------------------------------
-         NUMBER COUNTERS
-      -------------------------------------------------------- */
-
-      numbers.forEach((num) => {
-        const targetValue = parseFloat(
-          num.getAttribute("data-value") || "0"
-        );
-
-        const prefix =
-          num.getAttribute("data-prefix") || "";
-
-        const suffix =
-          num.getAttribute("data-suffix") || "";
-
-        const decimals = parseInt(
-          num.getAttribute("data-decimals") || "1"
-        );
-
-        const counter = {
-          value: 0,
-        };
-
-        gsap.to(counter, {
-          value: targetValue,
-          duration: 1.8,
-          ease: "power3.out",
-
-          scrollTrigger: {
-            trigger: num,
-            start: "top 85%",
-          },
-
-          onUpdate: () => {
-            num.innerHTML =
-              prefix +
-              counter.value.toFixed(decimals) +
-              suffix;
-          },
-        });
-      });
-
-      /* --------------------------------------------------------
-         MOUSE PARALLAX
-      -------------------------------------------------------- */
-
-      const handleMouseMove = (event: MouseEvent) => {
-        if (!containerRef.current) return;
-
-        const rect =
-          containerRef.current.getBoundingClientRect();
-
-        const mouseX =
-          (event.clientX - rect.left) / rect.width - 0.5;
-
-        const mouseY =
-          (event.clientY - rect.top) / rect.height - 0.5;
-
-        cards.forEach((card, index) => {
-          const depth =
-            1 + (index % 4) * 0.35;
-
-          gsap.to(card, {
-            x: mouseX * 30 * depth,
-            y: mouseY * 22 * depth,
-            rotateY: mouseX * 4,
-            rotateX: -mouseY * 3,
-            duration: 1.2,
-            ease: "power3.out",
-          });
-        });
-      };
-
-      const container = containerRef.current;
-
-      container?.addEventListener(
-        "mousemove",
-        handleMouseMove
-      );
-
-      return () => {
-        container?.removeEventListener(
-          "mousemove",
-          handleMouseMove
-        );
-      };
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
+  const sceneRef = useRef<HTMLDivElement>(null);
 
   return (
     <CinematicScene
@@ -406,11 +268,13 @@ export function MeasurementScene() {
       ======================================================= */}
 
       <div
-        ref={containerRef}
+        ref={sceneRef}
         className="
           absolute
           inset-0
           z-30
+          w-full
+          h-full
           pointer-events-auto
         "
         style={{
@@ -433,7 +297,8 @@ export function MeasurementScene() {
           <MeasureCard
             tone="blue"
             depth="forward"
-            className="card-left"
+            className="w-[220px] card-left"
+            removeBacking={true}
           >
             <p
               className="
@@ -489,7 +354,7 @@ export function MeasurementScene() {
                     data-value="72.4"
                     data-decimals="1"
                   >
-                    0.0
+                    72.4
                   </span>
                 </p>
 
@@ -519,6 +384,7 @@ export function MeasurementScene() {
           <MeasureCard
             tone="purple"
             depth="back"
+            removeBacking={true}
           >
             <p
               className="
@@ -547,7 +413,7 @@ export function MeasurementScene() {
                 data-prefix="+"
                 data-decimals="1"
               >
-                +0.0
+                +1.2
               </span>
             </p>
           </MeasureCard>
@@ -569,6 +435,7 @@ export function MeasurementScene() {
           <MeasureCard
             tone="green"
             depth="primary"
+            removeBacking={true}
           >
             <p
               className="
@@ -592,7 +459,7 @@ export function MeasurementScene() {
                 data-prefix="$"
                 data-decimals="2"
               >
-                $0.00
+                $187.40
               </span>
             </p>
 
@@ -621,6 +488,7 @@ export function MeasurementScene() {
             tone="orange"
             depth="primary"
             className="w-[280px]"
+            removeBacking={true}
           >
             <p
               className="
@@ -645,7 +513,7 @@ export function MeasurementScene() {
                     data-value="14.2"
                     data-decimals="1"
                   >
-                    0.0
+                    14.2
                   </span>
                 </p>
                 <p className="mt-1 text-[12px] text-slate-300">Index</p>
@@ -657,7 +525,7 @@ export function MeasurementScene() {
                     data-value="3.85"
                     data-decimals="2"
                   >
-                    0.00
+                    3.85
                   </span>
                 </p>
                 <p className="mt-1 text-[12px] text-slate-300">ATR (14D)</p>
@@ -685,6 +553,7 @@ export function MeasurementScene() {
             tone="red"
             depth="back"
             className="w-[280px]"
+            removeBacking={true}
           >
             <p
               className="
@@ -709,7 +578,7 @@ export function MeasurementScene() {
                     data-value="0.82"
                     data-decimals="2"
                   >
-                    0.00
+                    0.82
                   </span>
                 </p>
                 <p className="mt-1 text-[12px] text-slate-300">%B</p>
@@ -722,7 +591,7 @@ export function MeasurementScene() {
                     data-suffix="x"
                     data-decimals="1"
                   >
-                    0.0x
+                    1.8x
                   </span>
                 </p>
                 <p className="mt-1 text-[12px] text-slate-300">Rel Vol</p>

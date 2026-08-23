@@ -2,81 +2,27 @@
 
 import React, { useEffect, useState } from "react";
 import { useUser } from "@/app/context/UserContext";
+import { useDashboardOverview } from "@/app/hooks/useDashboardOverview";
+import { useMarketQuote } from "@/app/hooks/useMarketQuote";
 import { MarketTicker } from "@/components/dashboard/MarketTicker";
 import MarketOverview from "@/app/components/dashboard/MarketOverview";
 import { SeasonalitySection } from "@/app/components/dashboard/seasonality/SeasonalitySection";
 import { TradingCommandBar } from "@/app/components/dashboard/workspace/TradingCommandBar";
 import { MarketMovers } from "@/app/components/dashboard/workspace/MarketMovers";
+import { SymbolSearch } from "@/app/components/dashboard/workspace/SymbolSearch";
 import { MarketIntelligence } from "@/app/components/dashboard/analytics/MarketIntelligence";
 import { ExecutionHistory } from "@/app/components/dashboard/analytics/ExecutionHistory";
 
 export default function DashboardContent() {
   const { holdings } = useUser();
-  const [quotes, setQuotes] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    
-    async function fetchQuotes() {
-      if (holdings.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://acutrader-backend.onrender.com/api";
-        const promises = holdings.map(h => 
-           fetch(`${baseUrl}/market/quote/${h.symbol}`).then(r => r.json()).catch(() => ({}))
-        );
-        
-        const results = await Promise.all(promises);
-        const newQuotes: Record<string, any> = {};
-        
-        results.forEach((q, i) => {
-           if (q && (q.symbol || holdings[i].symbol)) {
-              newQuotes[q.symbol || holdings[i].symbol] = q;
-           }
-        });
-
-        if (mounted) {
-          setQuotes(newQuotes);
-          setLoading(false);
-        }
-      } catch (e) {
-        console.error("Failed to fetch dashboard quotes", e);
-        if (mounted) setLoading(false);
-      }
-    }
-
-    fetchQuotes();
-    return () => { mounted = false; };
-  }, [holdings]);
-
-  const [summary, setSummary] = useState<any>(null);
-  
-  useEffect(() => {
-     async function fetchSummary() {
-         try {
-             const { getPortfolioSummary } = await import('@/app/services/portfolioService');
-             const data = await getPortfolioSummary();
-             setSummary(data);
-         } catch (e) {
-             console.error("Dashboard summary fetch failed", e);
-         }
-     }
-     fetchSummary();
-  }, []);
-
-  const totalAccountValue = summary ? summary.equity : 99404.42;
-  const availableCash = summary ? summary.balance : 99366.18;
-  const totalDailyPL = summary ? summary.dayPnl : 124.50;
-  const dailyPLPercent = summary && summary.equity ? (summary.dayPnl / (summary.equity - summary.dayPnl)) * 100 : 0.12;
+  const [activeSymbol, setActiveSymbol] = useState("AAPL");
+  const { data: dashboardData, isLoading: dashboardLoading } = useDashboardOverview();
   
   // Transform holdings into sidebar positions
   const positions = holdings.map(h => {
-     const quote = quotes[h.symbol] || {};
-     const last = quote.regularMarketPrice || quote.current_price || h.avgCost || 0;
+     // For now, if no real-time quote is available per-component, we can fallback to avgCost or something
+     // A better approach would be to have a global quote context or use a hook per position in a subcomponent
+     const last = h.avgCost || 0; 
      const pnl = (last - h.avgCost) * h.quantity;
      const pnlPercent = h.avgCost > 0 ? ((last - h.avgCost) / h.avgCost) * 100 : 0;
      return {
@@ -89,6 +35,17 @@ export default function DashboardContent() {
      };
   });
 
+  const totalAccountValue = dashboardData?.portfolio?.equity ?? 99404.42;
+  const availableCash = dashboardData?.portfolio?.balance ?? dashboardData?.buyingPower ?? 99366.18;
+  const totalDailyPL = dashboardData?.dayPnL ?? dashboardData?.portfolio?.dayPnl ?? 124.50;
+  const dailyPLPercent = dashboardData?.portfolio?.equity ? (totalDailyPL / (dashboardData.portfolio.equity - totalDailyPL)) * 100 : 0.12;
+  
+  const marketRegime = dashboardData?.marketRegime?.regime ?? "BULLISH";
+  const regimeConfidence = dashboardData?.marketRegime?.confidence ?? 82;
+  const dayExposure = dashboardData?.dayExposure ?? 12.4;
+  const winRate = dashboardData?.winRate ?? 64.8;
+  const activePositions = dashboardData?.activePositions ?? positions.length ?? 2;
+
   return (
     <div className="min-h-screen flex flex-col w-full overflow-hidden bg-[var(--bg-primary)]">
       
@@ -100,12 +57,12 @@ export default function DashboardContent() {
          dayPnl={totalDailyPL}
          dayPnlPercent={dailyPLPercent}
          availableCash={availableCash}
-         activePositions={positions.length || 2}
+         activePositions={activePositions}
          openOrders={3}
-         marketRegime="BULLISH"
-         regimeConfidence={82}
-         dayExposure={12.4}
-         winRate={64.8}
+         marketRegime={marketRegime}
+         regimeConfidence={regimeConfidence}
+         dayExposure={dayExposure}
+         winRate={winRate}
       />
 
       <div className="w-full max-w-full px-6 md:px-8 py-6 space-y-6">
@@ -116,9 +73,18 @@ export default function DashboardContent() {
           <div className="xl:col-span-12 flex flex-col gap-6">
             <div className="border border-[var(--border)] bg-[var(--surface)] rounded-md shadow-sm p-6 flex-1 flex flex-col">
               <div className="mb-6 flex items-center justify-between border-b border-[var(--border)] pb-4">
-                <div>
-                  <p className="metadata-label">MARKET OVERVIEW</p>
-                  <h2 className="mt-2 section-title text-[20px]">Active Market Structure</h2>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="metadata-label">MARKET OVERVIEW</p>
+                    <h2 className="mt-2 section-title text-[20px]">Active Market Structure</h2>
+                  </div>
+                  
+                  <div className="ml-4 w-64">
+                    <SymbolSearch 
+                      value={activeSymbol} 
+                      onSelect={(symbol) => setActiveSymbol(symbol)} 
+                    />
+                  </div>
                 </div>
                 <span className="metadata-label text-[var(--positive)] flex items-center gap-2">
                   <span className="relative flex h-2 w-2">
@@ -128,7 +94,7 @@ export default function DashboardContent() {
                   LIVE DATA
                 </span>
               </div>
-              <MarketOverview />
+              <MarketOverview activeSymbol={activeSymbol} />
             </div>
 
             <MarketMovers />
@@ -142,11 +108,11 @@ export default function DashboardContent() {
                   Wait, SeasonalitySection renders a <section> with p-6 md:p-8 xl:grid-cols-12. 
                   We can wrap it in a clean container so it fits naturally. */}
               <div className="border border-[var(--border)] rounded-md overflow-hidden bg-[var(--surface)]">
-                 <SeasonalitySection />
+                 <SeasonalitySection symbol={activeSymbol} />
               </div>
            </div>
            <div className="xl:col-span-4 2xl:col-span-3">
-              <MarketIntelligence />
+              <MarketIntelligence activeSymbol={activeSymbol} />
            </div>
         </section>
 
