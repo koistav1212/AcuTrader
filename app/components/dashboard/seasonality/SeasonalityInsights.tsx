@@ -1,18 +1,17 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { MonthlySeasonality, WeeklySeasonality } from "@/utils/seasonality";
+import { MonthlySeasonality } from "@/utils/seasonality";
 import { cn } from "@/app/lib/utils";
 
 interface SeasonalityInsightsProps {
   symbol: string;
   monthlyData: MonthlySeasonality[];
-  weeklyData: WeeklySeasonality[];
 }
 
-export function SeasonalityInsights({ symbol, monthlyData, weeklyData }: SeasonalityInsightsProps) {
+export function SeasonalityInsights({ symbol, monthlyData }: SeasonalityInsightsProps) {
   const insights = useMemo(() => {
-    if (!monthlyData || monthlyData.length === 0 || !weeklyData || weeklyData.length === 0) return null;
+    if (!monthlyData || monthlyData.length === 0) return null;
 
     let bestMonth = monthlyData[0];
     let worstMonth = monthlyData[0];
@@ -24,13 +23,8 @@ export function SeasonalityInsights({ symbol, monthlyData, weeklyData }: Seasona
       if (m.positiveFrequency > highestWinRateMonth.positiveFrequency) highestWinRateMonth = m;
     });
 
-    let bestDay = weeklyData[0];
-    weeklyData.forEach((w) => {
-      if (w.positiveFrequency > bestDay.positiveFrequency) bestDay = w;
-    });
-
-    return { bestMonth, worstMonth, highestWinRateMonth, bestDay };
-  }, [monthlyData, weeklyData]);
+    return { bestMonth, worstMonth, highestWinRateMonth };
+  }, [monthlyData]);
 
   if (!insights) return null;
 
@@ -54,11 +48,6 @@ export function SeasonalityInsights({ symbol, monthlyData, weeklyData }: Seasona
         <InsightBlock 
           label="CONSISTENCY" 
           text={`${symbol} has closed ${insights.highestWinRateMonth.month} positively in ${insights.highestWinRateMonth.positiveFrequency.toFixed(0)}% of observed years.`} 
-        />
-
-        <InsightBlock 
-          label="BEST TRADING DAY" 
-          text={`${insights.bestDay.day} has the highest historical positive-return frequency for ${symbol} at ${insights.bestDay.positiveFrequency.toFixed(0)}%.`} 
         />
       </div>
     </div>

@@ -143,58 +143,7 @@ export default function MarketOverview({ activeSymbol }: MarketOverviewProps) {
         <PriceChart data={chartData} color="#2563eb" />
       </div>
 
-      {/* Market Breadth & Sectors */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-[var(--border)]">
-        {/* Market Breadth */}
-        <div className="flex flex-col gap-3">
-          <h3 className="font-mono text-[11px] tracking-widest text-[var(--text-muted)] uppercase">Market Breadth</h3>
-          
-          <div className="grid grid-cols-3 gap-2 font-mono text-[13px] border-b border-[var(--border)] pb-3">
-            <div>
-               <span className="text-[var(--text-secondary)] block text-[10px] uppercase">Advancers</span>
-               <span className="text-[var(--positive)] font-bold text-[14px]">31</span>
-            </div>
-            <div>
-               <span className="text-[var(--text-secondary)] block text-[10px] uppercase">Decliners</span>
-               <span className="text-[var(--negative)] font-bold text-[14px]">18</span>
-            </div>
-            <div>
-               <span className="text-[var(--text-secondary)] block text-[10px] uppercase">Unchanged</span>
-               <span className="text-[var(--text-muted)] font-bold text-[14px]">6</span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-2 font-mono text-[13px]">
-             <div>
-               <span className="text-[var(--text-secondary)] block text-[10px] uppercase">A/D Ratio</span>
-               <span className="text-[var(--text-primary)] font-bold text-[14px]">1.72</span>
-            </div>
-            <div>
-               <span className="text-[var(--text-secondary)] block text-[10px] uppercase">Above 50 DMA</span>
-               <span className="text-[var(--text-primary)] font-bold text-[14px]">68%</span>
-            </div>
-            <div>
-               <span className="text-[var(--text-secondary)] block text-[10px] uppercase">Above 200 DMA</span>
-               <span className="text-[var(--text-primary)] font-bold text-[14px]">61%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Sector Performance */}
-        <div className="flex flex-col gap-3">
-          <h3 className="font-mono text-[11px] tracking-widest text-[var(--text-muted)] uppercase flex justify-between">
-             <span>Sector Performance</span>
-             <span>1D</span>
-          </h3>
-          <div className="flex flex-col gap-1.5 font-mono text-[12px]">
-             <SectorRow name="Technology" value="+1.2%" fill={70} type="positive" />
-             <SectorRow name="Financials" value="+0.8%" fill={40} type="positive" />
-             <SectorRow name="Energy" value="+1.6%" fill={80} type="positive" />
-             <SectorRow name="Healthcare" value="-0.4%" fill={20} type="negative" />
-             <SectorRow name="Consumer" value="-0.2%" fill={10} type="negative" />
-          </div>
-        </div>
-      </div>
+     
     </div>
   );
 }

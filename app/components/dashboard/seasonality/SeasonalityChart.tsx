@@ -3,12 +3,11 @@
 import React, { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import { SeasonalityMode } from "./SeasonalityTabs";
-import { MonthlySeasonality, WeeklySeasonality, YearlySeasonality } from "@/utils/seasonality";
+import { MonthlySeasonality, YearlySeasonality } from "@/utils/seasonality";
 
 interface SeasonalityChartProps {
   mode: SeasonalityMode;
   monthlyData: MonthlySeasonality[];
-  weeklyData: WeeklySeasonality[];
   yearlyData: YearlySeasonality[];
 }
 
@@ -60,11 +59,12 @@ const BaseChartOptions = {
   },
 };
 
-function _SeasonalityChart({ mode, monthlyData, weeklyData, yearlyData }: SeasonalityChartProps) {
+function _SeasonalityChart({ mode, monthlyData, yearlyData }: SeasonalityChartProps) {
   const options = useMemo(() => {
     if (mode === "Monthly") {
       const positiveColor = "#63b38d"; // var(--positive) equivalent
       const negativeColor = "#bd6666"; // var(--negative) equivalent
+      const currentYear = new Date().getFullYear();
 
       return {
         ...BaseChartOptions,
@@ -85,15 +85,31 @@ function _SeasonalityChart({ mode, monthlyData, weeklyData, yearlyData }: Season
         },
         xAxis: {
           ...BaseChartOptions.xAxis,
-          data: monthlyData.map(d => d.month),
+          data: monthlyData.map(d => `${currentYear}-${d.month}`),
         },
         series: [
           {
             type: "bar",
-            data: monthlyData.map(d => ({
-              value: d.averageReturn,
-              itemStyle: { color: d.averageReturn >= 0 ? positiveColor : negativeColor }
-            })),
+            data: monthlyData.map(d => {
+              const isPositive = d.averageReturn >= 0;
+              return {
+                value: d.averageReturn,
+                itemStyle: { color: isPositive ? positiveColor : negativeColor },
+                label: {
+                  show: true,
+                  position: isPositive ? 'top' : 'bottom',
+                  distance: 8,
+                  formatter: (params: any) => {
+                    const val = params.value;
+                    return `${val > 0 ? '+' : ''}${val.toFixed(2)}%`;
+                  },
+                  color: isPositive ? positiveColor : negativeColor,
+                  fontFamily: "var(--font-ibm-plex-mono), monospace",
+                  fontWeight: "bold",
+                  fontSize: 12,
+                }
+              };
+            }),
             barMaxWidth: 40,
             itemStyle: {
               borderRadius: [2, 2, 0, 0],
@@ -103,39 +119,7 @@ function _SeasonalityChart({ mode, monthlyData, weeklyData, yearlyData }: Season
       };
     }
 
-    if (mode === "Weekly") {
-      return {
-        ...BaseChartOptions,
-        tooltip: {
-          ...BaseChartOptions.tooltip,
-          formatter: (params: any) => {
-            const p = params[0];
-            const val = p.value;
-            return `
-              <div style="font-weight:bold; margin-bottom: 4px;">${p.name}</div>
-              <div>Avg Return: <b>${val > 0 ? '+' : ''}${val.toFixed(2)}%</b></div>
-            `;
-          }
-        },
-        xAxis: {
-          ...BaseChartOptions.xAxis,
-          data: weeklyData.map(d => d.day),
-        },
-        series: [
-          {
-            type: "bar",
-            data: weeklyData.map(d => ({
-              value: d.averageReturn,
-              itemStyle: { color: d.averageReturn >= 0 ? "#63b38d" : "#bd6666" }
-            })),
-            barMaxWidth: 40,
-            itemStyle: {
-              borderRadius: [2, 2, 0, 0],
-            },
-          },
-        ],
-      };
-    }
+
 
     if (mode === "Yearly") {
       const positiveColor = "#63b38d";
@@ -165,10 +149,26 @@ function _SeasonalityChart({ mode, monthlyData, weeklyData, yearlyData }: Season
         series: [
           {
             type: "bar",
-            data: yearlyData.map(d => ({
-              value: d.return,
-              itemStyle: { color: d.return >= 0 ? positiveColor : negativeColor }
-            })),
+            data: yearlyData.map(d => {
+              const isPositive = d.return >= 0;
+              return {
+                value: d.return,
+                itemStyle: { color: isPositive ? positiveColor : negativeColor },
+                label: {
+                  show: true,
+                  position: isPositive ? 'top' : 'bottom',
+                  distance: 8,
+                  formatter: (params: any) => {
+                    const val = params.value;
+                    return `${val > 0 ? '+' : ''}${val.toFixed(2)}%`;
+                  },
+                  color: isPositive ? positiveColor : negativeColor,
+                  fontFamily: "var(--font-ibm-plex-mono), monospace",
+                  fontWeight: "bold",
+                  fontSize: 12,
+                }
+              };
+            }),
             barMaxWidth: 40,
             itemStyle: {
               borderRadius: [2, 2, 0, 0],
@@ -179,7 +179,7 @@ function _SeasonalityChart({ mode, monthlyData, weeklyData, yearlyData }: Season
     }
 
     return BaseChartOptions;
-  }, [mode, monthlyData, weeklyData, yearlyData]);
+  }, [mode, monthlyData, yearlyData]);
 
   return <ReactECharts option={options} style={{ height: "100%", width: "100%" }} notMerge={true} />;
 }

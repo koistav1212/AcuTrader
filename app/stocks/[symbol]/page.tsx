@@ -1,21 +1,48 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { cn } from "../../lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Loader2, Plus, ArrowUpRight, ArrowDownRight, FileText, Download, Activity, Globe } from "lucide-react";
-import StockChart from "../../../components/charts/StockChart";
 import { useMarketSearch } from "@/app/hooks/useMarketSearch";
 import { useMarketQuote } from "@/app/hooks/useMarketQuote";
+import { useHistoricalData } from "@/app/hooks/useHistoricalData";
+import dynamic from "next/dynamic";
+
+const PriceChart = dynamic(() => import("@/components/charts/PriceChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full animate-pulse bg-[var(--border)] opacity-20 rounded-md" />
+  ),
+});
 
 export default function StockDetail() {
   const params = useParams();
   const symbol = params.symbol as string;
 
+  const [timeframe, setTimeframe] = useState("1M");
+  const timeframes = ["1D", "5D", "1M", "3M", "6M", "1Y", "5Y", "10Y"];
+
   const { data: searchResults, isLoading: isSearchLoading } = useMarketSearch(symbol);
   const { data: quoteData, isLoading: isQuoteLoading } = useMarketQuote(symbol);
+  const { data: historicalData, isLoading: isHistoryLoading } = useHistoricalData(symbol, timeframe, "1d");
+
+  const chartData = useMemo(() => {
+    if (!historicalData || historicalData.length === 0) return [];
+    return historicalData.map((d: any) => ({
+      time: d.date,
+      value: d.close || d.price || d.value,
+    }));
+  }, [historicalData]);
+
+  const chartColor = useMemo(() => {
+    if (chartData.length < 2) return "#64748b";
+    const firstPrice = chartData[0].value;
+    const lastPrice = chartData[chartData.length - 1].value;
+    return lastPrice > firstPrice ? "#22c55e" : lastPrice < firstPrice ? "#ef4444" : "#64748b";
+  }, [chartData]);
 
   const loading = isSearchLoading || isQuoteLoading;
 
@@ -127,18 +154,42 @@ export default function StockDetail() {
 
       {/* KEY FACTS (Strip) */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 py-4 border-y border-[var(--border)]">
-        <FactItem label="Market Cap" value={s.market_cap || s.marketCap || "-"} />
-        <FactItem label="P/E Ratio" value={s.pe_ratio || s.pe || "-"} />
+        <FactItem label="Market Cap" value={s.marketCap || "-"} />
+        <FactItem label="P/E Ratio" value={s.peRatio || "-"} />
         <FactItem label="EPS" value={s.eps ? `$${s.eps}` : "-"} />
-        <FactItem label="Div Yield" value={s.forward_dividend_yield || "-"} />
+        <FactItem label="Div Yield" value={s.dividendYield || "-"} />
         <FactItem label="Volume" value={s.volume || "-"} />
         <FactItem label="Sector" value={s.sector || "-"} truncate />
         <FactItem label="Industry" value={s.industry || "-"} truncate />
       </div>
 
       {/* MAIN CHART */}
-      <div className="w-full h-[500px] border border-[var(--border)] bg-[var(--surface-solid)] rounded-md shadow-sm overflow-hidden">
-         <StockChart symbol={s.symbol} />
+      <div className="w-full flex flex-col border border-[var(--border)] bg-[var(--surface-solid)] rounded-md shadow-sm overflow-hidden p-4">
+        <div className="flex justify-end mb-4">
+          <div className="flex gap-1 bg-[var(--surface-muted)] p-1 rounded-md overflow-x-auto hide-scroll">
+            {timeframes.map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setTimeframe(tf)}
+                className={`px-3 py-1 rounded text-[12px] font-mono font-bold transition-all shrink-0 ${
+                  timeframe === tf
+                    ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="w-full h-[450px] relative">
+          {isHistoryLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-solid)]/50 z-10">
+              <div className="animate-pulse flex items-center text-[var(--text-secondary)]">Loading chart...</div>
+            </div>
+          )}
+          <PriceChart data={chartData} color={chartColor} />
+        </div>
       </div>
 
       {/* FINANCIAL METRICS */}
@@ -146,34 +197,33 @@ export default function StockDetail() {
         {/* Trading Information */}
         <MetricPanel title="Trading Information">
            <MetricRow label="Open" value={s.open} prefix="$" />
-           <MetricRow label="Previous Close" value={s.previous_close} prefix="$" />
-           <MetricRow label="Day Range" value={`${s.day_low || '-'} - ${s.day_high || '-'}`} />
-           <MetricRow label="52 Week Range" value={`${s.fifty_two_week_low || '-'} - ${s.fifty_two_week_high || '-'}`} />
-           <MetricRow label="Avg Volume" value={s.average_volume} />
-           <MetricRow label="Bid" value={s.bid} />
-           <MetricRow label="Ask" value={s.ask} />
+           <MetricRow label="Previous Close" value={s.previousClose} prefix="$" />
+           <MetricRow label="Day Range" value={s.dayRange || '-'} />
+           <MetricRow label="52 Week Range" value={s['52WeekRange'] || '-'} />
+           <MetricRow label="Avg Volume" value={s.avgVolume} />
+        
         </MetricPanel>
 
         {/* Valuation */}
         <MetricPanel title="Valuation">
-           <MetricRow label="Enterprise Value" value={s.enterprise_value} />
-           <MetricRow label="Forward P/E" value={s.forward_pe} />
-           <MetricRow label="Trailing P/E" value={s.trailing_pe} />
-           <MetricRow label="PEG Ratio" value={s.peg_ratio} />
-           <MetricRow label="Price to Sales" value={s.price_to_sales} />
-           <MetricRow label="Price to Book" value={s.price_to_book} />
-           <MetricRow label="EV to EBITDA" value={s.enterprise_value_to_ebitda} />
+           <MetricRow label="Enterprise Value" value={s.enterpriseValue} />
+           <MetricRow label="Forward P/E" value={s.forwardPE} />
+           <MetricRow label="Trailing P/E" value={s.trailingPE} />
+           <MetricRow label="PEG Ratio" value={s.pegRatio} />
+           <MetricRow label="Price to Sales" value={s.priceToSales} />
+           <MetricRow label="Price to Book" value={s.priceToBook} />
+           <MetricRow label="EV to EBITDA" value={s.evToEBITDA} />
         </MetricPanel>
 
         {/* Financial Strength */}
         <MetricPanel title="Financial Strength">
            <MetricRow label="Revenue" value={s.revenue} />
-           <MetricRow label="Net Income" value={s.net_income} />
-           <MetricRow label="Profit Margin" value={s.profit_margin} />
-           <MetricRow label="Return on Equity" value={s.return_on_equity} />
-           <MetricRow label="Total Cash" value={s.total_cash} />
-           <MetricRow label="Total Debt/Equity" value={s.total_debt_to_equity} />
-           <MetricRow label="Analyst Rating" value={s.analyst_rating} />
+           <MetricRow label="Net Income" value={s.netIncome} />
+           <MetricRow label="Profit Margin" value={s.profitMargin} />
+           <MetricRow label="Return on Equity" value={s.returnOnEquity} />
+           <MetricRow label="Analyst Rating" value={s.analystRating} />
+           <MetricRow label="Target Price" value={s.targetPrice} prefix="$" />
+           <MetricRow label="Earnings Date" value={s.earningsDate} />
         </MetricPanel>
       </div>
 

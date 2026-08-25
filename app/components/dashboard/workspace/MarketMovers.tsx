@@ -6,6 +6,7 @@ import { useMarketMovers } from "@/app/hooks/useMarketMovers";
 
 interface Mover {
   symbol: string;
+  name?: string;
   price: number;
   change: number;
   volume?: string | number;
@@ -19,35 +20,86 @@ export function MarketMovers() {
     return <div className="p-4 animate-pulse bg-[var(--surface-solid)] rounded-md border border-[var(--border)] h-[120px]">Loading movers...</div>;
   }
 
-  const gainers: Mover[] = data?.gainers?.slice(0, 3) || [];
-  const losers: Mover[] = data?.losers?.slice(0, 3) || [];
-  const active: Mover[] = data?.active?.slice(0, 3) || [];
+  const gainers: Mover[] = data?.gainers?.slice(0, 10) || [];
+  const losers: Mover[] = data?.losers?.slice(0, 10) || [];
+  const active: Mover[] = data?.active?.slice(0, 10) || [];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 border border-[var(--border)] bg-[var(--surface-solid)] rounded-md shadow-sm">
-      <MoversColumn title="TOP GAINERS" items={gainers} type="positive" />
-      <MoversColumn title="TOP LOSERS" items={losers} type="negative" />
-      <MoversColumn title="MOST ACTIVE" items={active} type="neutral" />
+    <div className="flex flex-col gap-6 p-4 border border-[var(--border)] bg-[var(--surface-solid)] rounded-md shadow-sm">
+      <MoversRow title="TOP GAINERS" items={gainers} />
+      <MoversRow title="TOP LOSERS" items={losers} />
+      <MoversRow title="MOST ACTIVE" items={active} />
     </div>
   );
 }
 
-function MoversColumn({ title, items, type }: { title: string, items: Mover[], type: "positive"|"negative"|"neutral" }) {
+function formatVolume(vol: number | string | undefined): string {
+  if (vol === undefined || vol === null) return "N/A";
+  const num = typeof vol === "string" ? parseFloat(vol.replace(/,/g, "")) : vol;
+  if (isNaN(num)) return vol.toString();
+  if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
+  if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
+  if (num >= 1e3) return (num / 1e3).toFixed(2) + "K";
+  return num.toString();
+}
+
+function formatPrice(price: number): string {
+  if (price < 1) return price.toPrecision(4);
+  return price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function MoverCard({ item }: { item: Mover }) {
+  const changePercent = item.changePercent ?? item.change;
+  const isPositive = changePercent > 0;
+  const isNegative = changePercent < 0;
+  
+  const colorClass = isPositive 
+    ? "text-[var(--positive)]" 
+    : isNegative 
+      ? "text-[var(--negative)]" 
+      : "text-[var(--text-secondary)]";
+      
+  const arrow = isPositive ? "↑" : isNegative ? "↓" : "";
+  const sign = isPositive ? "+" : "";
+
   return (
-    <div className="flex flex-col gap-2">
-      <h3 className="font-mono text-[10px] tracking-widest text-[var(--text-muted)] uppercase border-b border-[var(--border)] pb-2 mb-1">{title}</h3>
-      <div className="flex flex-col">
+    <div className="flex flex-col min-w-[220px] max-w-[220px] p-3 rounded border border-[var(--border)] bg-[var(--surface-muted)] hover:bg-[var(--surface)] transition-colors shrink-0">
+      <div className="font-sans text-[14px] font-bold text-[var(--text-primary)] truncate">
+        {item.symbol}
+      </div>
+      <div className="font-sans text-[12px] text-[var(--text-secondary)] truncate mb-3">
+        {item.name || "\u00A0"}
+      </div>
+      
+      <div className="flex justify-between items-center mb-1">
+        <span className="font-mono text-[13px] font-semibold text-[var(--text-primary)]">
+          ${formatPrice(item.price)}
+        </span>
+        <span className={cn("font-mono text-[13px] font-semibold", colorClass)}>
+          {arrow} {sign}{changePercent.toFixed(2)}%
+        </span>
+      </div>
+      <div className="font-mono text-[11px] text-[var(--text-muted)]">
+        Volume {formatVolume(item.volume)}
+      </div>
+    </div>
+  );
+}
+
+function MoversRow({ title, items }: { title: string, items: Mover[] }) {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div className="flex flex-col w-full overflow-hidden">
+      <h3 className="font-mono text-[10px] tracking-widest text-[var(--text-muted)] uppercase border-b border-[var(--border)] pb-2 mb-3">
+        {title}
+      </h3>
+      <div 
+        className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden" 
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         {items.map((item, idx) => (
-          <div key={idx} className="flex justify-between items-center py-1 cursor-pointer hover:bg-[var(--surface-muted)] transition-colors px-1 -mx-1 rounded">
-            <span className="font-sans text-[13px] font-bold text-[var(--text-primary)]">{item.symbol}</span>
-            {item.volume && type === "neutral" ? (
-               <span className="font-mono text-[12px] font-semibold text-[var(--text-secondary)]">{item.volume}</span>
-            ) : (
-               <span className={cn("font-mono text-[12px] font-semibold", item.change >= 0 ? "text-[var(--positive)]" : "text-[var(--negative)]")}>
-                 {item.change >= 0 ? "+" : ""}{(item.changePercent ?? item.change).toFixed(2)}%
-               </span>
-            )}
-          </div>
+          <MoverCard key={idx} item={item} />
         ))}
       </div>
     </div>

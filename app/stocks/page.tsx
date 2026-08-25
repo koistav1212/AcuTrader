@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import Filters from "./Filters";
+
 import { useRouter } from "next/navigation";
 import { Search, Loader2, ArrowUpRight, ArrowDownRight, ArrowUpDown, Plus, Minus } from "lucide-react";
 import Image from "next/image";
@@ -22,15 +22,6 @@ export default function MarketScreener() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters
-  const [filters, setFilters] = useState({
-    exchange: "",
-    currency: "",
-    trend: "", // UP or DOWN
-    minPrice: 0,
-    maxPrice: 1000,
-    minMarketCap: 0,
-  });
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://acutrader-backend.onrender.com/api";
   const { toggleWatchlist, watchlistSymbols, user } = useUser();
@@ -61,8 +52,11 @@ export default function MarketScreener() {
     });
   };
 
+  const [errorInfo, setErrorInfo] = useState<string | null>(null);
+
   const fetchStocks = useCallback(async () => {
     setLoading(true);
+    setErrorInfo(null);
     try {
       let endpoint = `${baseUrl}/market/trending`;
       if (query) {
@@ -72,6 +66,7 @@ export default function MarketScreener() {
       const res = await fetch(endpoint, { cache: "no-store" });
 
       if (!res.ok) {
+        setErrorInfo(`HTTP Error: ${res.status}`);
         setData([]);
       } else {
         const json = await res.json();
@@ -83,12 +78,18 @@ export default function MarketScreener() {
           rawData = json.Stocks;
         } else if (json.data && Array.isArray(json.data)) {
           rawData = json.data;
+        } else if (json.data && json.data.data && Array.isArray(json.data.data)) {
+          rawData = json.data.data;
+        } else {
+          setErrorInfo(`Invalid JSON format: keys=${Object.keys(json).join(",")}`);
         }
 
-        setData(deduplicate(rawData));
+        const deduped = deduplicate(rawData);
+        setData(deduped);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Fetch failed", err);
+      setErrorInfo(`Fetch exception: ${err.message}`);
       setData([]);
     } finally {
       setLoading(false);
@@ -102,34 +103,10 @@ export default function MarketScreener() {
     return () => clearTimeout(timer);
   }, [fetchStocks, query]);
 
-  // Filtering Logic
   const filteredData = useMemo(() => {
     if (!Array.isArray(data)) return [];
-
-    return data.filter((s: any) => {
-      const itemExchange = s.exchange || "";
-      const itemCurrency = s.currency || "";
-
-      const price = s.current_price || s.price || 0;
-      const changeVal = s.change || s.percent_change || s.changesPercentage || 0;
-
-      const matchesExchange = filters.exchange ? itemExchange.toLowerCase().includes(filters.exchange.toLowerCase()) : true;
-      const matchesCurrency = filters.currency ? itemCurrency === filters.currency : true;
-
-      let matchesTrend = true;
-      if (filters.trend === "UP") matchesTrend = changeVal > 0;
-      else if (filters.trend === "DOWN") matchesTrend = changeVal < 0;
-
-      let matchesPrice = true;
-      if (price < filters.minPrice) matchesPrice = false;
-      if (filters.maxPrice < 1000 && price > filters.maxPrice) matchesPrice = false;
-
-      const mktCap = s.market_cap || s.mktCap || s.marketCap || 0;
-      const matchesMktCap = mktCap >= filters.minMarketCap;
-
-      return matchesExchange && matchesCurrency && matchesTrend && matchesPrice && matchesMktCap;
-    });
-  }, [data, filters]);
+    return data;
+  }, [data]);
 
   // Table Setup
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -273,7 +250,7 @@ export default function MarketScreener() {
   });
 
   return (
-    <section className="space-y-8 pb-20 relative min-h-screen">
+    <section className="space-y-8 pb-20 relative min-h-screen max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-8">
       {/* 🔍 SEARCH HERO */}
       <div className="flex flex-col items-center justify-center space-y-4 py-8">
         <h1 className="page-title text-center">Market Screener</h1>
@@ -296,15 +273,8 @@ export default function MarketScreener() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* FILTERS SIDEBAR */}
-        <div className="w-full lg:w-1/4 shrink-0">
-          <div className="lg:sticky lg:top-24 border border-[var(--border)] rounded-md bg-[var(--surface)] shadow-sm">
-            <Filters filters={filters} setFilters={setFilters} />
-          </div>
-        </div>
-
         {/* RESULTS TABLE */}
-        <div className="flex-1 space-y-4">
+        <div className="w-full space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-mono text-[12px] font-bold tracking-widest text-[var(--text-secondary)] uppercase">
               {loading && !query ? "Loading Trending Stocks..." : `${filteredData.length} Results Found`}
@@ -391,7 +361,16 @@ export default function MarketScreener() {
                   ) : (
                     <tr>
                       <td colSpan={7} className="px-4 py-12 text-center text-[var(--text-secondary)] font-sans text-[14px]">
-                        {query ? `No stocks found matching "${query}"` : "No stocks available matching your filters."}
+                        {errorInfo ? (
+                           <div className="text-red-500 font-mono">Error: {errorInfo}</div>
+                        ) : query ? (
+                           `No stocks found matching "${query}"` 
+                        ) : (
+                           "No stocks available matching your filters."
+                        )}
+                        <div className="mt-4 font-mono text-xs text-gray-500">
+                          Debug: data.length={data.length}, filteredData.length={filteredData.length}, loading={loading.toString()}
+                        </div>
                       </td>
                     </tr>
                   )}

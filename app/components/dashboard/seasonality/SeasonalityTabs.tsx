@@ -3,7 +3,7 @@
 import React from "react";
 import { cn } from "@/app/lib/utils";
 
-export type SeasonalityMode = "Monthly" | "Weekly" | "Yearly";
+export type SeasonalityMode = "Monthly" | "Yearly";
 
 interface SeasonalityTabsProps {
   activeMode: SeasonalityMode;
@@ -11,7 +11,7 @@ interface SeasonalityTabsProps {
 }
 
 export function SeasonalityTabs({ activeMode, onChange }: SeasonalityTabsProps) {
-  const modes: SeasonalityMode[] = ["Monthly", "Weekly", "Yearly"];
+  const modes: SeasonalityMode[] = ["Monthly", "Yearly"];
 
   return (
     <div className="flex bg-[var(--surface-muted)] p-1 rounded-md shrink-0 border border-[var(--border)]">

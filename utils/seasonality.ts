@@ -16,10 +16,7 @@ export interface SeasonalityMetrics {
 
 export interface MonthlySeasonality extends SeasonalityMetrics {
   month: string;
-}
-
-export interface WeeklySeasonality extends SeasonalityMetrics {
-  day: string;
+  yearlyReturns?: Record<number, number>;
 }
 
 export interface YearlySeasonality {
@@ -53,7 +50,6 @@ function getMetrics(returns: number[]): SeasonalityMetrics {
 export function calculateMonthlySeasonality(data: HistoricalDataPoint[]): MonthlySeasonality[] {
   if (!data || data.length === 0) return [];
 
-  // Group by year-month
   const monthlyData: Record<string, { start: number; end: number }> = {};
 
   for (let i = 0; i < data.length; i++) {
@@ -70,12 +66,19 @@ export function calculateMonthlySeasonality(data: HistoricalDataPoint[]): Monthl
 
   // Aggregate by month (0-11)
   const monthAgg: Record<number, number[]> = {};
-  for (let i = 0; i < 12; i++) monthAgg[i] = [];
+  const monthYearlyReturns: Record<number, Record<number, number>> = {};
+  for (let i = 0; i < 12; i++) {
+    monthAgg[i] = [];
+    monthYearlyReturns[i] = {};
+  }
 
   Object.entries(monthlyData).forEach(([key, val]) => {
-    const month = parseInt(key.split("-")[1], 10);
+    const [yearStr, monthStr] = key.split("-");
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
     const ret = ((val.end - val.start) / val.start) * 100;
     monthAgg[month].push(ret);
+    monthYearlyReturns[month][year] = ret;
   });
 
   return Array.from({ length: 12 }).map((_, i) => {
@@ -83,40 +86,13 @@ export function calculateMonthlySeasonality(data: HistoricalDataPoint[]): Monthl
     const metrics = getMetrics(returns);
     return {
       month: MONTH_NAMES[i],
+      yearlyReturns: monthYearlyReturns[i],
       ...metrics,
     };
   });
 }
 
-export function calculateWeeklySeasonality(data: HistoricalDataPoint[]): WeeklySeasonality[] {
-  if (!data || data.length < 2) return [];
 
-  // 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri
-  const dayAgg: Record<number, number[]> = { 1: [], 2: [], 3: [], 4: [], 5: [] };
-
-  for (let i = 1; i < data.length; i++) {
-    const prev = data[i - 1];
-    const curr = data[i];
-    const date = new Date(curr.date);
-    const day = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-
-    if (day >= 1 && day <= 5) {
-      if (prev.close) {
-        const ret = ((curr.close - prev.close) / prev.close) * 100;
-        dayAgg[day].push(ret);
-      }
-    }
-  }
-
-  return [1, 2, 3, 4, 5].map(day => {
-    const returns = dayAgg[day];
-    const metrics = getMetrics(returns);
-    return {
-      day: DAY_NAMES[day],
-      ...metrics,
-    };
-  });
-}
 
 export function calculateYearlySeasonality(data: HistoricalDataPoint[]): YearlySeasonality[] {
   if (!data || data.length === 0) return [];

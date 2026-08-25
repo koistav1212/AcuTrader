@@ -24,6 +24,8 @@ export default function TrendingStocks() {
           setData(json);
         } else if (json && Array.isArray(json.data)) {
           setData(json.data);
+        } else if (json && json.data && Array.isArray(json.data.data)) {
+          setData(json.data.data);
         } else {
           console.error("Unexpected API response format:", json);
           setData([]);

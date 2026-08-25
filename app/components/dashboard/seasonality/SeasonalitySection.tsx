@@ -7,7 +7,7 @@ import { SeasonalityTabs, SeasonalityMode } from "./SeasonalityTabs";
 import { YearSelector } from "./YearSelector";
 import { SeasonalityInsights } from "./SeasonalityInsights";
 import { useHistoricalData } from "@/app/hooks/useHistoricalData";
-import { calculateMonthlySeasonality, calculateWeeklySeasonality, calculateYearlySeasonality } from "@/utils/seasonality";
+import { calculateMonthlySeasonality, calculateYearlySeasonality } from "@/utils/seasonality";
 
 import { SymbolSearch } from "../workspace/SymbolSearch";
 
@@ -38,12 +38,7 @@ export function SeasonalitySection({ symbol = "SPY" }: { symbol?: string }) {
     return [];
   }, [mode, status, apiData]);
 
-  const weeklyData = useMemo(() => {
-    if (mode === "Weekly" && status === "success" && apiData) {
-      return calculateWeeklySeasonality(apiData);
-    }
-    return [];
-  }, [mode, status, apiData]);
+
 
   const yearlyData = useMemo(() => {
     if (mode === "Yearly" && status === "success" && apiData) {
@@ -130,7 +125,6 @@ export function SeasonalitySection({ symbol = "SPY" }: { symbol?: string }) {
                  <LazySeasonalityChart 
                    mode={mode} 
                    monthlyData={monthlyData} 
-                   weeklyData={weeklyData} 
                    yearlyData={yearlyData} 
                  />
               </div>
@@ -152,7 +146,7 @@ export function SeasonalitySection({ symbol = "SPY" }: { symbol?: string }) {
           </div>
         ) : status === "success" ? (
           <div className="xl:mt-[52px] h-[calc(100%-52px)]">
-             <SeasonalityInsights symbol={localSymbol} monthlyData={monthlyData} weeklyData={weeklyData} />
+             <SeasonalityInsights symbol={localSymbol} monthlyData={monthlyData} />
           </div>
         ) : (
           <div className="xl:mt-[52px] h-[calc(100%-52px)] border border-[var(--border)] rounded-md bg-[var(--surface-solid)] opacity-50 flex items-center justify-center p-6 text-center">
