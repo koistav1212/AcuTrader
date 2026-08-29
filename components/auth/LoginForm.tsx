@@ -49,7 +49,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggle }) => {
     setIsLoading(true);
     
     try {
-      const API_BASE_URL = process.env.API_BASE_URL ;
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {

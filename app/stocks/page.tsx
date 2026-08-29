@@ -23,7 +23,7 @@ export default function MarketScreener() {
   const [loading, setLoading] = useState(true);
 
 
-  const baseUrl = process.env.API_BASE_URL || "https://acutrader-backend.onrender.com/api";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://acutrader-backend.onrender.com/api";
   const { toggleWatchlist, watchlistSymbols, user } = useUser();
   const [toggling, setToggling] = useState<string | null>(null);
 

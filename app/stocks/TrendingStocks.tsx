@@ -16,7 +16,7 @@ export default function TrendingStocks() {
   useEffect(() => {
     async function load() {
       try {
-        const baseUrl = process.env.API_BASE_URL || "https://acutrader-backend.onrender.com/api";
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://acutrader-backend.onrender.com/api";
         const res = await fetch(`${baseUrl}/market/trending`);
         const json = await res.json();
         
