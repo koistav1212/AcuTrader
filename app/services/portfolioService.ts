@@ -23,7 +23,7 @@ export interface EquityPoint {
   equity: number;
 }
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:4000/api';
+const API_BASE_URL = process.env.API_BASE_URL ;
 
 async function authHeaders() {
   const token = localStorage.getItem('token');

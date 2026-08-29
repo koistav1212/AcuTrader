@@ -1,5 +1,5 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-export const ML_API_URL = process.env.NEXT_PUBLIC_ML_API_URL || 'http://localhost:8000/api/ml';
+export const API_BASE_URL = process.env.API_BASE_URL ;
+export const ML_API_URL = process.env.ML_API_URL || 'http://localhost:8000/api/ml';
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;

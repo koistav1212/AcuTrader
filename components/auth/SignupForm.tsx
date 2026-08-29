@@ -55,7 +55,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onToggle }) => {
     setIsLoading(true);
     
     try {
-       const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:4000/api';
+       const API_BASE_URL = process.env.API_BASE_URL ;
     
       const response =  await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
