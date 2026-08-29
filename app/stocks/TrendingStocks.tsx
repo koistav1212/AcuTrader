@@ -16,7 +16,7 @@ export default function TrendingStocks() {
   useEffect(() => {
     async function load() {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://acutrader-backend.onrender.com/api";
+        const baseUrl = process.env.API_BASE_URL || "https://acutrader-backend.onrender.com/api";
         const res = await fetch(`${baseUrl}/market/trending`);
         const json = await res.json();
         
@@ -26,6 +26,8 @@ export default function TrendingStocks() {
           setData(json.data);
         } else if (json && json.data && Array.isArray(json.data.data)) {
           setData(json.data.data);
+        } else if (json && json.data && Array.isArray(json.data.quotes)) {
+          setData(json.data.quotes);
         } else {
           console.error("Unexpected API response format:", json);
           setData([]);

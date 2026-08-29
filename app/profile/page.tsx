@@ -262,7 +262,7 @@ function MiniHoldingPill({ symbol }: { symbol: string }) {
     let mounted = true;
     async function fetchQuote() {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const baseUrl = process.env.API_BASE_URL;
         const res = await fetch(`${baseUrl}/market/quote/${symbol}`);
         const json = await res.json();
         if (mounted) {
@@ -320,7 +320,7 @@ function WatchlistRow({ symbol, onToggle, isToggling }: { symbol: string, onTogg
     let mounted = true;
     async function fetchQuote() {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const baseUrl = process.env.API_BASE_URL;
         const res = await fetch(`${baseUrl}/market/quote/${symbol}`);
         const json = await res.json();
         if (mounted) {

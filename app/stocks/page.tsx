@@ -23,7 +23,7 @@ export default function MarketScreener() {
   const [loading, setLoading] = useState(true);
 
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://acutrader-backend.onrender.com/api";
+  const baseUrl = process.env.API_BASE_URL || "https://acutrader-backend.onrender.com/api";
   const { toggleWatchlist, watchlistSymbols, user } = useUser();
   const [toggling, setToggling] = useState<string | null>(null);
 
@@ -80,6 +80,8 @@ export default function MarketScreener() {
           rawData = json.data;
         } else if (json.data && json.data.data && Array.isArray(json.data.data)) {
           rawData = json.data.data;
+        } else if (json.data && Array.isArray(json.data.quotes)) {
+          rawData = json.data.quotes;
         } else {
           setErrorInfo(`Invalid JSON format: keys=${Object.keys(json).join(",")}`);
         }
