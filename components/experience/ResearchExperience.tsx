@@ -5,6 +5,9 @@ import { VerticalNav } from "./components/VerticalNav";
 import { ResearchProgress } from "./components/ResearchProgress";
 import { OpenPlatformButton } from "@/components/auth/OpenPlatformButton";
 
+
+import { useRouter } from "next/navigation";
+import { useUser } from "@/app/context/UserContext";
 import { HeroScene } from "./scenes/HeroScene";
 import { SignalScene } from "./scenes/SignalScene";
 import { MeasurementScene } from "./scenes/MeasurementScene";
@@ -16,12 +19,24 @@ import { ThesisScene } from "./scenes/ThesisScene";
 export function ResearchExperience() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentSection, setCurrentSection] = useState(1);
-
+  const router = useRouter();
+  const { user, loading } = useUser();
   // ScrollTrigger temporarily removed for pure CSS rendering test.
   useEffect(() => {
     // We could implement an IntersectionObserver here later if needed,
     // but for now, we just let it sit at section 1.
   }, []);
+
+  const handleOpenPlatform = () => {
+    if (loading) return;
+
+    if (!user) {
+      router.push("/auth/login?next=/dashboard");
+      return;
+    }
+
+    router.push("/dashboard");
+  };
 
   return (
     <div
@@ -44,7 +59,25 @@ export function ResearchExperience() {
         </div>
 
         <div className="pointer-events-auto">
-          <OpenPlatformButton />
+            <button
+      onClick={handleOpenPlatform}
+      className="
+        group
+        bg-[var(--text-primary)]
+        px-7 py-3
+        font-mono text-[10px]
+        tracking-[0.18em]
+        text-[var(--surface-solid)]
+        transition-all duration-300
+        hover:bg-[var(--accent)]
+        hover:-translate-y-[1px]
+      "
+    >
+      OPEN PLATFORM
+      <span className="ml-2 inline-block transition-transform group-hover:translate-x-1">
+        →
+      </span>
+    </button>
         </div>
       </nav>
 
